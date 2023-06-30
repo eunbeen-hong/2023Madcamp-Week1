@@ -22,6 +22,7 @@ class HomeFragment : Fragment() {
     private val binding get() = _binding!!
 
     private val gson = Gson()
+    private lateinit var adapter: ArrayAdapter<String>
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -36,7 +37,7 @@ class HomeFragment : Fragment() {
 
         val people = readFromFile(fileName)
         val listView: ListView = binding.listView
-        val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_list_item_1, people.map { "${it.name} : ${it.number}" })
+        adapter = ArrayAdapter(requireContext(), android.R.layout.simple_list_item_1, people.map { "${it.name} : ${it.number}" })
         listView.adapter = adapter
 
         listView.onItemClickListener = AdapterView.OnItemClickListener { _, _, position, _ ->
@@ -141,16 +142,16 @@ class HomeFragment : Fragment() {
         instagramTextView.text = "Instagram ID: ${person.instagram}"
         githubTextView.text = "Github ID: ${person.github}"
 
+        builder.setPositiveButton("닫기", null) // set '닫기' button before creating the AlertDialog
+
+        val dialog = builder.create() // Create the AlertDialog object
         deleteButton.setOnClickListener {
-            deleteContact(person) // <- adapter parameter removed
-            builder.create().dismiss() // or use `dialog` variable if you declared it.
+            deleteContact(person)
+            dialog.dismiss() // Use the AlertDialog object to dismiss
+            adapter.notifyDataSetChanged()
         }
 
-        builder.setPositiveButton("닫기") { dialog, _ ->
-            dialog.dismiss()
-        }
-
-        builder.show()
+        dialog.show() // Show the AlertDialog using the object
     }
 
 
@@ -170,6 +171,8 @@ class HomeFragment : Fragment() {
         val people = readFromFile(fileName)
         people.remove(person)
         writeToFile(fileName, people)
+        adapter.clear() // 기존 데이터 제거
+        adapter.addAll(people.map { "${it.name} : ${it.number}" }) // 새로운 데이터 추가
     }
 
     // 연락처 검색 결과
@@ -200,7 +203,7 @@ class HomeFragment : Fragment() {
         builder.show()
     }
 
-    // 연락처 검색 결과 다이얼로그
+    // 연락처 검색 결과
     private fun showSearchResultsDialog(searchResults: List<Person>) {
         val builder = AlertDialog.Builder(requireContext())
         builder.setTitle("검색 결과")
