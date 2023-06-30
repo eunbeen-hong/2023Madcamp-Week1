@@ -1,0 +1,32 @@
+[
+  {
+    "date": "6/29/2023",
+    "tasks": [
+      {
+        "name": "todo1",
+        "completed": true
+      },
+      {
+        "name": "todo2",
+        "completed": false
+      },
+      {
+        "name": "todo3",
+        "completed": true
+      }
+    ]
+  },
+  {
+    "date": "6/30/2023",
+    "tasks": [
+      {
+        "name": "todo4",
+        "completed": false
+      },
+      {
+        "name": "todo5",
+        "completed": false
+      }
+    ]
+  }
+]
