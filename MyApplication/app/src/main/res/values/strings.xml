@@ -3,4 +3,5 @@
     <string name="title_home">Home</string>
     <string name="title_gallery">Gallery</string>
     <string name="title_calendar">Calendar</string>
+    <string name="init_date_select">Select a Date</string>
 </resources>
