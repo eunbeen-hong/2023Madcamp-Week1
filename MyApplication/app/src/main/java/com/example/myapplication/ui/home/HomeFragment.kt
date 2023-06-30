@@ -48,6 +48,11 @@ class HomeFragment : Fragment() {
             showAddContactDialog(fileName, adapter)
         }
 
+        binding.searchContact.setOnClickListener {
+            showSearchDialog()
+        }
+
+
         return root
     }
 
@@ -84,6 +89,8 @@ class HomeFragment : Fragment() {
         return gson.fromJson(json, object : TypeToken<MutableList<Person>>() {}.type)
     }
 
+
+    // 연락처 추가
     private fun showAddContactDialog(fileName: String, adapter: ArrayAdapter<String>) {
         val builder = AlertDialog.Builder(requireContext())
         builder.setTitle("새로운 연락처를 추가하세요!")
@@ -113,6 +120,7 @@ class HomeFragment : Fragment() {
         builder.show()
     }
 
+    // 세부 정보
     private fun showDetailsDialog(person: Person) {
         val builder = AlertDialog.Builder(requireContext())
         builder.setTitle("세부 정보")
@@ -125,12 +133,18 @@ class HomeFragment : Fragment() {
         val emailTextView = view.findViewById<TextView>(R.id.emailTextView)
         val instagramTextView = view.findViewById<TextView>(R.id.instagramTextView)
         val githubTextView = view.findViewById<TextView>(R.id.githubTextView)
+        val deleteButton = view.findViewById<Button>(R.id.deleteButton)
 
         nameTextView.text = "이름: ${person.name}"
         numberTextView.text = "전화번호: ${person.number}"
         emailTextView.text = "E-mail: ${person.email}"
         instagramTextView.text = "Instagram ID: ${person.instagram}"
         githubTextView.text = "Github ID: ${person.github}"
+
+        deleteButton.setOnClickListener {
+            deleteContact(person) // <- adapter parameter removed
+            builder.create().dismiss() // or use `dialog` variable if you declared it.
+        }
 
         builder.setPositiveButton("닫기") { dialog, _ ->
             dialog.dismiss()
@@ -139,4 +153,69 @@ class HomeFragment : Fragment() {
         builder.show()
     }
 
+
+    // 연락처 검색
+    private fun searchContacts(searchText: String, searchBy: String): List<Person> {
+        val allContacts = readFromFile("numbers.json")
+
+        return when (searchBy) {
+            "Name" -> allContacts.filter { it.name.contains(searchText, ignoreCase = true) }
+            "Number" -> allContacts.filter { it.number.contains(searchText) }
+            else -> emptyList()
+        }
+    }
+
+    private fun deleteContact(person: Person) {
+        val fileName = "numbers.json"
+        val people = readFromFile(fileName)
+        people.remove(person)
+        writeToFile(fileName, people)
+    }
+
+    // 연락처 검색 결과
+    private fun showSearchDialog() {
+        val builder = AlertDialog.Builder(requireContext())
+        builder.setTitle("검색")
+
+        val view = layoutInflater.inflate(R.layout.search_dialog, null)
+        builder.setView(view)
+
+        val searchBySpinner = view.findViewById<Spinner>(R.id.searchBySpinner)
+        val searchText = view.findViewById<EditText>(R.id.searchEditText)
+
+        val searchOptions = arrayOf("Name", "Number")
+        val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_dropdown_item, searchOptions)
+        searchBySpinner.adapter = adapter
+
+        builder.setPositiveButton("검색") { _, _ ->
+            val selectedSearchBy = searchBySpinner.selectedItem.toString()
+            val enteredSearchText = searchText.text.toString()
+
+            val searchResults = searchContacts(enteredSearchText, selectedSearchBy)
+            showSearchResultsDialog(searchResults)
+        }
+
+        builder.setNegativeButton("취소") { dialog, _ -> dialog.cancel() }
+
+        builder.show()
+    }
+
+    // 연락처 검색 결과 다이얼로그
+    private fun showSearchResultsDialog(searchResults: List<Person>) {
+        val builder = AlertDialog.Builder(requireContext())
+        builder.setTitle("검색 결과")
+
+        val names = searchResults.map { it.name }.toTypedArray()
+
+        builder.setItems(names) { _, which ->
+            val selectedPerson = searchResults[which]
+            showDetailsDialog(selectedPerson)
+        }
+
+        builder.setPositiveButton("닫기") { dialog, _ ->
+            dialog.dismiss()
+        }
+
+        builder.show()
+    }
 }

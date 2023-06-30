@@ -35,4 +35,11 @@
         android:layout_height="wrap_content"
         android:textAppearance="?android:textAppearanceMedium" />
 
+    <Button
+        android:id="@+id/deleteButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="연락처 삭제"
+        android:layout_gravity="end"/>
+
 </LinearLayout>
