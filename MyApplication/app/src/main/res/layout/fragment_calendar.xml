@@ -30,7 +30,8 @@
             android:ems="10"
             android:hint="@string/add_task_hint"
             android:imeOptions="actionDone"
-            android:inputType="text" />
+            android:inputType="text"
+            android:autofillHints="name"/>
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/tasksList"
@@ -38,4 +39,5 @@
             android:layout_height="match_parent" />
 
     </LinearLayout>
+
 </androidx.constraintlayout.widget.ConstraintLayout>

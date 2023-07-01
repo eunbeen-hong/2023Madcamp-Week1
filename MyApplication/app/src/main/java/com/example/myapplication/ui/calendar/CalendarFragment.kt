@@ -1,34 +1,23 @@
 package com.example.myapplication.ui.calendar
 
 import android.content.Context
-import com.example.myapplication.R
 import android.os.Bundle
+import android.util.Log
 import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
-import android.widget.ArrayAdapter
-import android.widget.Button
-import android.widget.CalendarView
 import android.widget.EditText
-import android.widget.ListAdapter
-import android.widget.ListView
-import android.widget.SearchView
-import android.widget.TextView
-import androidx.annotation.CallSuper
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.ViewModelProvider
-import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import androidx.recyclerview.widget.RecyclerView.ViewHolder
 import com.example.myapplication.databinding.FragmentCalendarBinding
 import com.google.gson.Gson
-import com.google.gson.reflect.TypeToken
 import java.io.File
 import java.io.FileOutputStream
+import java.lang.Exception
 
 data class Task(val name: String, var completed: Boolean)
 data class Collection(val date: String, var tasks: List<Task>)
@@ -46,10 +35,8 @@ class CalendarFragment : Fragment() {
 
         _binding = FragmentCalendarBinding.inflate(inflater, container, false)
         val root: View = binding.root
-        val selectedDateTextView: TextView = binding.selectedDate
         val taskListView: RecyclerView = binding.tasksList
         taskListView.layoutManager = LinearLayoutManager(requireContext())
-//        val calendarView: CalendarView = binding.calendar
 
         lateinit var selectedDate: String
 
@@ -60,12 +47,26 @@ class CalendarFragment : Fragment() {
 
         binding.calendar.setOnDateChangeListener { _, year, month, dayOfMonth ->
             selectedDate = "${month + 1}/${dayOfMonth}/${year}"
-            selectedDateTextView.text = selectedDate
+            binding.selectedDate.text = selectedDate
 
-            val sortedTasks: MutableList<String> = getDailyTasksSorted(userCollection, selectedDate)
+            val sortedTasks: MutableList<Task> = getDailyTasksSorted(userCollection, selectedDate)
 
             taskListView.visibility = if (sortedTasks.isEmpty()) View.GONE else View.VISIBLE
-            taskListView.adapter = TaskAdapter(sortedTasks)
+            try {
+                val taskAdapter = TaskAdapter(sortedTasks)
+                taskAdapter.setOnItemRemovedListener { removedTask ->
+                    taskAdapter.removeItem(removedTask)
+                    Log.d("Test", "removed item: $removedTask")
+                }
+                taskListView.adapter = taskAdapter
+
+                val itemTouchHelperCallback = ItemTouchHelperCallback(taskAdapter)
+                val itemTouchHelper = ItemTouchHelper(itemTouchHelperCallback)
+                itemTouchHelper.attachToRecyclerView(binding.tasksList)
+            } catch (e: Exception) {
+                Log.e("Test","Error: ${e.message}")
+                e.printStackTrace()
+            }
         }
 
         ///////////////////////add new task/////////////////////////
@@ -92,8 +93,13 @@ class CalendarFragment : Fragment() {
 
                     writeToFile(fileName, userCollection)
 
-                    val sortedTasks: MutableList<String> = getDailyTasksSorted(userCollection, selectedDate)
-                    taskListView.adapter = TaskAdapter(sortedTasks)
+                    val sortedTasks: MutableList<Task> = getDailyTasksSorted(userCollection, selectedDate)
+                    val taskAdapter = TaskAdapter(sortedTasks)
+                    taskAdapter.setOnItemRemovedListener { removedTask ->
+                        taskAdapter.removeItem(removedTask)
+                        Log.d("Test", "removed item: $removedTask")
+                    }
+                    taskListView.adapter = taskAdapter
                 }
 
                 newTextTask.text.clear()
@@ -123,10 +129,10 @@ class CalendarFragment : Fragment() {
         file.writeText(json)
     }
 
-    private fun getDailyTasksSorted(userCollection: MutableList<Collection>, date: String): MutableList<String> {
+    private fun getDailyTasksSorted(userCollection: MutableList<Collection>, date: String): MutableList<Task> {
         val matchingDate: Collection? = userCollection.find { it.date == date }
-        val completeTasks: MutableList<String> = matchingDate?.tasks?.filter { it.completed }?.map { it.name }?.toMutableList() ?: mutableListOf()
-        val incompleteTasks: MutableList<String> = matchingDate?.tasks?.filter { !it.completed }?.map { it.name }?.toMutableList() ?: mutableListOf()
+        val completeTasks: MutableList<Task> = matchingDate?.tasks?.filter { it.completed }?.map { it }?.toMutableList() ?: mutableListOf()
+        val incompleteTasks: MutableList<Task> = matchingDate?.tasks?.filter { !it.completed }?.map { it }?.toMutableList() ?: mutableListOf()
         return (incompleteTasks + completeTasks).toMutableList()
     }
 
@@ -148,77 +154,112 @@ class CalendarFragment : Fragment() {
 
 }
 
-class TaskAdapter(private val tasks: List<String>) : RecyclerView.Adapter<TaskAdapter.TaskViewHolder>() {
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): TaskViewHolder {
-        val itemView = LayoutInflater.from(parent.context).inflate(android.R.layout.simple_list_item_1, parent, false)
-        return TaskViewHolder(itemView)
-    }
+/*
+interface ItemTouchHelperAdapter {
+fun onItemMove(fromPosition: Int, toPosition: Int): Boolean
+fun onItemDismiss(position: Int)
+}
+class TaskAdapter(private val tasks: MutableList<Task>) : RecyclerView.Adapter<TaskAdapter.TaskViewHolder>(), ItemTouchHelperAdapter {
 
-    override fun onBindViewHolder(holder: TaskViewHolder, position: Int) {
-        val task = tasks[position]
-        holder.bind(task)
-    }
+private val removedItems = mutableListOf<Task>()
+private var onItemRemoved: ((Task) -> Unit)? = null
 
-    override fun getItemCount(): Int {
-        return tasks.size
-    }
-
-    inner class TaskViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        private  val taskTestView: TextView = itemView.findViewById(android.R.id.text1)
-
-        fun bind(task: String) {
-            taskTestView.text = task
-        }
-    }
+fun setOnItemRemovedListener(listener: (Task) -> Unit) {
+onItemRemoved = listener
 }
 
+override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): TaskViewHolder {
+val itemView = LayoutInflater.from(parent.context).inflate(R.layout.task_item, parent, false)
+return TaskViewHolder(itemView)
+}
 
+override fun onBindViewHolder(holder: TaskViewHolder, position: Int) {
+val task = tasks[position]
+holder.bind(task)
+}
 
-//    fun removeItem(position: Int): T? {
-//        if (position >= itemCount) return null
-//        valitem = currentList[position]
-//        removedItems.add(item)
-//        val actualList = currentList - removedItems
-//        if(actualList.isEmpty()) removedItems.clear()
-//        submit(actualList, true)
-//        return item
-//    }
-//
-//    private fun submit(list: List<T>?, isLocalSubmit: Boolean) {
-//        if(!isLocalSubmit) removedItems.clear()
-//        super.submitList(list)
-//    }
-//
-//    @CallSuper
-//    override fun submitList(list: List<T>?) {
-//        submit(list, false)
-//    }
-//abstract class  ListAdapterSwipeable<T, VH: RecyclerView.ViewHolder> (
-//    diffCallback: DiffUtil.ItemCallback<T>
-//        ): ListAdapter<T, VH>(diffCallback) {
-//            ...
-//        }
-//
-//class ItemSwipeHandler<T>(
-//    private val adapter: ListAdapterSwipeable<T, *>,
-//    private val onItemRemoved: ((item: T) -> Unit)? = null
-//): ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT or ItemTouchHelper.RIGHT) {
-//
-//}
-//
-//override fun onMove(
-//    recyclerView: RecyclerView,
-//    viewHolder: RecyclerView.ViewHolder
-//): Boolean = false
-//
-//override fun onSwipe(viewHolder: ViewHolder, direction: Int) {
-//    val position = viewHolder.adapterPosition
-//    val item = adapter.removeItem(positoin) ?: return
-//    onItemRemoved?.invoke(item)
-//}
-//
-//val swipeableAdapter = SomeAdapter() // adapter must inherit ListAdapterSwipeable
-//val recyclerView = findViewById(R.id.recyclerView).apply {
-//    adapter = swipeableAdapter
-//}
-//ItemTouchHelper(ItemSwipeHandler(someAdapter) { Log.d("test", "removedotem: $it") }).attachToRecyclerView(recyclerView)
+override fun getItemCount(): Int {
+return tasks.size
+}
+
+fun removeItem(removedTask: Task) {
+val position = tasks.indexOf(removedTask)
+if (position >= itemCount) return
+val item = tasks[position]
+removedItems.add(item)
+val actualList = tasks.filterNot { removedItems.contains(it) }
+tasks.clear()
+tasks.addAll(actualList)
+notifyDataSetChanged()
+}
+
+override fun onItemMove(fromPosition: Int, toPosition: Int): Boolean {
+return false
+}
+
+override fun onItemDismiss(position: Int) {
+tasks.removeAt(position)
+notifyItemRemoved(position)
+}
+
+inner class TaskViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+private val taskTextView: TextView = itemView.findViewById((R.id.textItem))
+
+init {
+val swipeCallback = object :
+ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT or ItemTouchHelper.RIGHT) {
+override fun onMove(
+recyclerView: RecyclerView,
+viewHolder: ViewHolder,
+target: RecyclerView.ViewHolder
+): Boolean {
+return false
+}
+
+override fun onSwiped(viewHolder: ViewHolder, direction: Int) {
+val position = viewHolder.adapterPosition
+val task = tasks[position]
+removeItem(task)
+onItemRemoved?.invoke(task)
+}
+}
+
+val itemTouchHelper = ItemTouchHelper(swipeCallback)
+itemTouchHelper.attachToRecyclerView(itemView.findViewById<RecyclerView>(R.id.tasksList))
+}
+
+fun bind(task: Task) {
+taskTextView.text = task.name
+}
+}
+
+}
+class ItemTouchHelperCallback(private val adapter: ItemTouchHelperAdapter) : ItemTouchHelper.Callback() {
+
+override fun isLongPressDragEnabled(): Boolean {
+return false
+}
+
+override fun isItemViewSwipeEnabled(): Boolean {
+return true
+}
+
+override fun getMovementFlags(recyclerView: RecyclerView, viewHolder: ViewHolder): Int {
+val dragFlags = ItemTouchHelper.UP or ItemTouchHelper.DOWN
+val swipeFlags = ItemTouchHelper.START or ItemTouchHelper.END
+return makeMovementFlags(dragFlags, swipeFlags)
+}
+
+override fun onMove(
+recyclerView: RecyclerView,
+viewHolder: ViewHolder,
+target: ViewHolder
+): Boolean {
+return adapter.onItemMove(viewHolder.adapterPosition, target.adapterPosition)
+}
+
+override fun onSwiped(viewHolder: ViewHolder, direction: Int) {
+adapter.onItemDismiss(viewHolder.adapterPosition)
+}
+}
+*/
