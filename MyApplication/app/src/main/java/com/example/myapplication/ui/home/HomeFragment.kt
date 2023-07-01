@@ -99,27 +99,36 @@ class HomeFragment : Fragment() {
         val view = layoutInflater.inflate(R.layout.dialog_add_contact, null)
         builder.setView(view)
 
-        builder.setPositiveButton("확인") { _, _ ->
-            val name = if (view.findViewById<EditText>(R.id.name).text.toString().isBlank()) "none" else view.findViewById<EditText>(R.id.name).text.toString()
-            val number = if (view.findViewById<EditText>(R.id.number).text.toString().isBlank()) "none" else view.findViewById<EditText>(R.id.number).text.toString()
-            val email = if (view.findViewById<EditText>(R.id.email).text.toString().isBlank()) "none" else view.findViewById<EditText>(R.id.email).text.toString()
-            val instagram = if (view.findViewById<EditText>(R.id.instagram).text.toString().isBlank()) "none" else view.findViewById<EditText>(R.id.instagram).text.toString()
-            val github = if (view.findViewById<EditText>(R.id.github).text.toString().isBlank()) "none" else view.findViewById<EditText>(R.id.github).text.toString()
+        builder.setPositiveButton("확인", null)
+        builder.setNegativeButton("취소", null)
 
+        val dialog = builder.create()
 
-            val newPerson = Person(name, number, email, instagram, github)
-            people = readFromFile(fileName)
-            people.add(newPerson)
-            writeToFile(fileName, people)
+        dialog.setOnShowListener {
+            val positiveButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE)
+            positiveButton.setOnClickListener {
+                val name = if (view.findViewById<EditText>(R.id.name).text.toString().isBlank()) "none" else view.findViewById<EditText>(R.id.name).text.toString()
+                val number = if (view.findViewById<EditText>(R.id.number).text.toString().isBlank()) "none" else view.findViewById<EditText>(R.id.number).text.toString()
+                val email = if (view.findViewById<EditText>(R.id.email).text.toString().isBlank()) "none" else view.findViewById<EditText>(R.id.email).text.toString()
+                val instagram = if (view.findViewById<EditText>(R.id.instagram).text.toString().isBlank()) "none" else view.findViewById<EditText>(R.id.instagram).text.toString()
+                val github = if (view.findViewById<EditText>(R.id.github).text.toString().isBlank()) "none" else view.findViewById<EditText>(R.id.github).text.toString()
 
-            adapter.clear() // 기존 데이터 제거
-            adapter.addAll(people.map { "${it.name} : ${it.number}" }) // 새로운 데이터 추가
-            adapter.notifyDataSetChanged() // ListView 갱신
+                val newPerson = Person(name, number, email, instagram, github)
+                people = readFromFile(fileName)
+                people.add(newPerson)
+                writeToFile(fileName, people)
+
+                adapter.clear() // 기존 데이터 제거
+                adapter.addAll(people.map { "${it.name} : ${it.number}" }) // 새로운 데이터 추가
+                adapter.notifyDataSetChanged() // ListView 갱신
+
+                dialog.dismiss()
+            }
         }
 
-        builder.setNegativeButton("취소") { dialog, _ -> dialog.cancel() }
+        dialog.window?.setBackgroundDrawableResource(R.drawable.dialog_border) // 배경 설정
 
-        builder.show()
+        dialog.show() // AlertDialog 보여주기
     }
 
     // 세부 정보
@@ -136,23 +145,72 @@ class HomeFragment : Fragment() {
         val instagramTextView = view.findViewById<TextView>(R.id.instagramTextView)
         val githubTextView = view.findViewById<TextView>(R.id.githubTextView)
         val deleteButton = view.findViewById<Button>(R.id.deleteButton)
+        val editButton = view.findViewById<Button>(R.id.editButton)
 
+        // Update the TextViews
         nameTextView.text = "이름: ${person.name}"
         numberTextView.text = "전화번호: ${person.number}"
         emailTextView.text = "E-mail: ${person.email}"
         instagramTextView.text = "Instagram ID: ${person.instagram}"
         githubTextView.text = "Github ID: ${person.github}"
 
-        builder.setPositiveButton("닫기", null) // set '닫기' button before creating the AlertDialog
+        builder.setPositiveButton("닫기", null)
 
-        val dialog = builder.create() // Create the AlertDialog object
+        val dialog = builder.create()
+
         deleteButton.setOnClickListener {
             deleteContact(person)
-            dialog.dismiss() // Use the AlertDialog object to dismiss
+            dialog.dismiss()
             adapter.notifyDataSetChanged()
         }
 
-        dialog.show() // Show the AlertDialog using the object
+        // Add an OnClickListener for the 'editButton'
+        editButton.setOnClickListener {
+            dialog.dismiss()
+            showEditContactDialog(person, adapter)
+        }
+
+        dialog.window?.setBackgroundDrawableResource(R.drawable.dialog_border)
+        dialog.show()
+    }
+
+
+    private fun showEditContactDialog(person: Person, adapter: ArrayAdapter<String>) {
+        val builder = AlertDialog.Builder(requireContext())
+        builder.setTitle("연락처 수정")
+
+        val view = layoutInflater.inflate(R.layout.dialog_edit_contact, null)
+        builder.setView(view)
+
+        // Set existing values
+        view.findViewById<EditText>(R.id.name).setText(person.name)
+        view.findViewById<EditText>(R.id.number).setText(person.number)
+        view.findViewById<EditText>(R.id.email).setText(person.email)
+        view.findViewById<EditText>(R.id.instagram).setText(person.instagram)
+        view.findViewById<EditText>(R.id.github).setText(person.github)
+
+        builder.setPositiveButton("확인", null)
+        builder.setNegativeButton("취소", null)
+
+        val dialog = builder.create()
+        dialog.setOnShowListener {
+            val positiveButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE)
+            positiveButton.setOnClickListener {
+                val updatedName = view.findViewById<EditText>(R.id.name).text.toString()
+                val updatedNumber = view.findViewById<EditText>(R.id.number).text.toString()
+                val updatedEmail = view.findViewById<EditText>(R.id.email).text.toString()
+                val updatedInstagram = view.findViewById<EditText>(R.id.instagram).text.toString()
+                val updatedGithub = view.findViewById<EditText>(R.id.github).text.toString()
+
+                val updatedPerson = Person(updatedName, updatedNumber, updatedEmail, updatedInstagram, updatedGithub)
+                updateContact(person, updatedPerson, adapter)
+
+                dialog.dismiss()
+            }
+        }
+
+        dialog.window?.setBackgroundDrawableResource(R.drawable.dialog_border) // 배경 설정
+        dialog.show() // AlertDialog 보여주기
     }
 
 
@@ -176,6 +234,20 @@ class HomeFragment : Fragment() {
         adapter.addAll(people.map { "${it.name} : ${it.number}" }) // 새로운 데이터 추가
     }
 
+    private fun updateContact(oldPerson: Person, newPerson: Person, adapter: ArrayAdapter<String>) {
+        val fileName = "numbers.json"
+        people = readFromFile(fileName)
+        val index = people.indexOf(oldPerson)
+        if (index != -1) {
+            people[index] = newPerson
+            writeToFile(fileName, people)
+            adapter.clear() // 기존 데이터 제거
+            adapter.addAll(people.map { "${it.name} : ${it.number}" }) // 새로운 데이터 추가
+            adapter.notifyDataSetChanged() // ListView 갱신
+        }
+    }
+
+
     // 연락처 검색 결과
     private fun showSearchDialog() {
         val builder = AlertDialog.Builder(requireContext())
@@ -191,17 +263,27 @@ class HomeFragment : Fragment() {
         val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_dropdown_item, searchOptions)
         searchBySpinner.adapter = adapter
 
-        builder.setPositiveButton("검색") { _, _ ->
-            val selectedSearchBy = searchBySpinner.selectedItem.toString()
-            val enteredSearchText = searchText.text.toString()
+        builder.setPositiveButton("검색", null)
+        builder.setNegativeButton("취소", null)
 
-            val searchResults = searchContacts(enteredSearchText, selectedSearchBy)
-            showSearchResultsDialog(searchResults)
+        val dialog = builder.create()
+
+        dialog.setOnShowListener {
+            val positiveButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE)
+            positiveButton.setOnClickListener {
+                val selectedSearchBy = searchBySpinner.selectedItem.toString()
+                val enteredSearchText = searchText.text.toString()
+
+                val searchResults = searchContacts(enteredSearchText, selectedSearchBy)
+                showSearchResultsDialog(searchResults)
+
+                dialog.dismiss()
+            }
         }
 
-        builder.setNegativeButton("취소") { dialog, _ -> dialog.cancel() }
+        dialog.window?.setBackgroundDrawableResource(R.drawable.dialog_border) // 배경 설정
 
-        builder.show()
+        dialog.show() // AlertDialog 보여주기
     }
 
     // 연락처 검색 결과
@@ -216,10 +298,19 @@ class HomeFragment : Fragment() {
             showDetailsDialog(selectedPerson)
         }
 
-        builder.setPositiveButton("닫기") { dialog, _ ->
-            dialog.dismiss()
+        builder.setPositiveButton("닫기", null)
+
+        val dialog = builder.create()
+
+        dialog.setOnShowListener {
+            val positiveButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE)
+            positiveButton.setOnClickListener {
+                dialog.dismiss()
+            }
         }
 
-        builder.show()
+        dialog.window?.setBackgroundDrawableResource(R.drawable.dialog_border) // 배경 설정
+        dialog.show() // AlertDialog 보여주기
     }
+
 }
