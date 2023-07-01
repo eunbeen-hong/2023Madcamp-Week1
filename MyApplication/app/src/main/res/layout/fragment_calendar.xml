@@ -25,18 +25,17 @@
 
         <EditText
             android:id="@+id/newTask"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_width="wrap_content"
+            android:layout_height="48dp"
             android:ems="10"
-            android:inputType="text"
             android:hint="@string/add_task_hint"
-            android:imeOptions="actionDone" />
+            android:imeOptions="actionDone"
+            android:inputType="text" />
 
-        <ListView
+        <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/tasksList"
             android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1" />
+            android:layout_height="match_parent" />
 
     </LinearLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>

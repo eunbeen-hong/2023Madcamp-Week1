@@ -28,5 +28,22 @@
         "completed": false
       }
     ]
+  },
+  {
+    "date": "7/1/2023",
+    "tasks": [
+      {
+        "name": "create new task",
+        "completed": false
+      },
+      {
+        "name": "delete existing task",
+        "completed": false
+      },
+      {
+        "name": "view existing tasks",
+        "completed": true
+      }
+    ]
   }
 ]
