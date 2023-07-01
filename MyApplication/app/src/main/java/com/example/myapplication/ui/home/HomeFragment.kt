@@ -23,7 +23,7 @@ class HomeFragment : Fragment() {
 
     private val gson = Gson()
     private lateinit var adapter: ArrayAdapter<String>
-
+    private lateinit var people: MutableList<Person>
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -35,7 +35,7 @@ class HomeFragment : Fragment() {
         val fileName = "numbers.json"
         copyAssetToFile(requireContext(), fileName)
 
-        val people = readFromFile(fileName)
+        people = readFromFile(fileName)
         val listView: ListView = binding.listView
         adapter = ArrayAdapter(requireContext(), android.R.layout.simple_list_item_1, people.map { "${it.name} : ${it.number}" })
         listView.adapter = adapter
@@ -100,14 +100,15 @@ class HomeFragment : Fragment() {
         builder.setView(view)
 
         builder.setPositiveButton("확인") { _, _ ->
-            val name = view.findViewById<EditText>(R.id.name).text.toString()
-            val number = view.findViewById<EditText>(R.id.number).text.toString()
-            val email = view.findViewById<EditText>(R.id.email).text.toString()
-            val instagram = view.findViewById<EditText>(R.id.instagram).text.toString()
-            val github = view.findViewById<EditText>(R.id.github).text.toString()
+            val name = if (view.findViewById<EditText>(R.id.name).text.toString().isBlank()) "none" else view.findViewById<EditText>(R.id.name).text.toString()
+            val number = if (view.findViewById<EditText>(R.id.number).text.toString().isBlank()) "none" else view.findViewById<EditText>(R.id.number).text.toString()
+            val email = if (view.findViewById<EditText>(R.id.email).text.toString().isBlank()) "none" else view.findViewById<EditText>(R.id.email).text.toString()
+            val instagram = if (view.findViewById<EditText>(R.id.instagram).text.toString().isBlank()) "none" else view.findViewById<EditText>(R.id.instagram).text.toString()
+            val github = if (view.findViewById<EditText>(R.id.github).text.toString().isBlank()) "none" else view.findViewById<EditText>(R.id.github).text.toString()
+
 
             val newPerson = Person(name, number, email, instagram, github)
-            val people = readFromFile(fileName)
+            people = readFromFile(fileName)
             people.add(newPerson)
             writeToFile(fileName, people)
 
@@ -168,7 +169,7 @@ class HomeFragment : Fragment() {
 
     private fun deleteContact(person: Person) {
         val fileName = "numbers.json"
-        val people = readFromFile(fileName)
+        people = readFromFile(fileName)
         people.remove(person)
         writeToFile(fileName, people)
         adapter.clear() // 기존 데이터 제거
