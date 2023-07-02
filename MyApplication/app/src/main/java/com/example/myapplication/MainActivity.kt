@@ -118,5 +118,5 @@ class MainActivity : AppCompatActivity() {
                         checkPermission()
                     }
                 } */
-            }
+    }
 }

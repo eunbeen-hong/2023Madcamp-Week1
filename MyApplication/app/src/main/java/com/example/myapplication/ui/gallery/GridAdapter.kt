@@ -1,5 +1,8 @@
 package com.example.myapplication.ui.gallery
 
+import android.R
+import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.app.AppCompatActivity
 import android.content.Context
 import android.view.LayoutInflater
 import android.view.View
@@ -8,6 +11,9 @@ import android.widget.BaseAdapter
 import android.widget.ImageView
 import android.widget.LinearLayout
 import com.bumptech.glide.Glide
+import com.example.myapplication.MainActivity
+import kotlin.coroutines.coroutineContext
+
 
 /*
 class GridAdapter(val context: Context, val PictureList: List<Int>) : BaseAdapter() {
