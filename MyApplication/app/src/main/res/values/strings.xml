@@ -5,4 +5,5 @@
     <string name="title_calendar">Calendar</string>
     <string name="init_date_select">Select a Date</string>
     <string name="add_task_hint">Write a new task</string>
+    <string name="gallery_camera">execute Camera App</string>
 </resources>
