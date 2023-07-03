@@ -11,4 +11,5 @@
     <color name="green">#FF00FF00</color>
     <color name="blue">#FF0000FF</color>
     <color name="grey">#808080</color>
+    <color name="transparent_purple">#80FF00FF</color>
 </resources>
