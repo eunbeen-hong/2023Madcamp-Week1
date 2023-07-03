@@ -15,12 +15,14 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.myapplication.databinding.FragmentCalendarBinding
 import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 import java.io.File
 import java.io.FileOutputStream
-import java.lang.Exception
+import java.util.Calendar
+import kotlin.math.log
 
 data class Task(val name: String, var completed: Boolean)
-data class Collection(val date: String, var tasks: List<Task>)
+data class Collection(val date: String, var tasks: MutableList<Task>)
 
 class CalendarFragment : Fragment() {
     private var _binding: FragmentCalendarBinding? = null
@@ -37,35 +39,70 @@ class CalendarFragment : Fragment() {
         val root: View = binding.root
         val taskListView: RecyclerView = binding.tasksList
         taskListView.layoutManager = LinearLayoutManager(requireContext())
-
-        lateinit var selectedDate: String
-
         val fileName = "tasks.json"
         copyAssetsToFile(requireContext(), fileName)
 
-        val userCollection: MutableList<Collection> = readFromFile(fileName)
+        var userCollection: MutableList<Collection> = readFromFile(fileName)
+        var selectedDate: String = getToday()
+        var sortedTasks: MutableList<Task> = getDailyTasksSorted(userCollection, selectedDate)
+        var taskAdapter = TaskAdapter(sortedTasks)
+        taskAdapter.setOnItemRemovedListener { removedTask ->
+            try {
+                val selectedCollection = userCollection.find { it.date == selectedDate }
+                selectedCollection?.let { collection ->
+                    val index = collection.tasks.indexOf(removedTask)
+                    if (index != -1) {
+                        collection.tasks.removeAt(index)
+                        if (collection.tasks.isEmpty()) {
+                            userCollection.remove(collection)
+                        }
+                        Log.d("JSON File", "setOnItemRemovedListener")
+                        writeToFile(fileName, userCollection)
+                        sortedTasks = getDailyTasksSorted(userCollection, selectedDate)
+                        taskAdapter.updateData(sortedTasks)
+                        taskAdapter.notifyDataSetChanged()
+                    }
+                }
+            } catch (e: Exception) {
+                Log.v("JSON File", "setOnItemRemovedListener $e")
+            }
+        }
+        taskAdapter.setOnCheckedChangeListener { task, isChecked ->
+            task.completed = isChecked
+            Log.d("JSON File", "setOnCheckedChangeListener")
+            writeToFile(fileName, userCollection)
+            sortedTasks = getDailyTasksSorted(userCollection, selectedDate)
+            taskAdapter.updateData(sortedTasks)
+            taskAdapter.notifyDataSetChanged()
+        }
+
+        taskListView.adapter = taskAdapter
+        initializeItemTouchHelper(taskAdapter)
+
+
+        taskListView.visibility = if (sortedTasks.isEmpty()) View.GONE else View.VISIBLE
+
+        binding.selectedDate.text = selectedDate
 
         binding.calendar.setOnDateChangeListener { _, year, month, dayOfMonth ->
+            try{
             selectedDate = "${month + 1}/${dayOfMonth}/${year}"
             binding.selectedDate.text = selectedDate
 
-            val sortedTasks: MutableList<Task> = getDailyTasksSorted(userCollection, selectedDate)
+            sortedTasks = getDailyTasksSorted(userCollection, selectedDate)
+            taskAdapter.updateData(sortedTasks)
+            taskAdapter.notifyDataSetChanged()
+            Log.d("JSON File", "setOnDateChangeListener")
+                Log.d("JSON File", "sortedTasks; $sortedTasks")
+            writeToFile(fileName, userCollection)
 
-            taskListView.visibility = if (sortedTasks.isEmpty()) View.GONE else View.VISIBLE
-            try {
-                val taskAdapter = TaskAdapter(sortedTasks)
-                taskAdapter.setOnItemRemovedListener { removedTask ->
-                    taskAdapter.removeItem(removedTask)
-                    Log.d("Test", "removed item: $removedTask")
-                }
-                taskListView.adapter = taskAdapter
+            taskListView.visibility =
+                if (sortedTasks.isEmpty()) View.GONE else View.VISIBLE // TODO: sortedTasks 말고 내부 확인?
 
-                val itemTouchHelperCallback = ItemTouchHelperCallback(taskAdapter)
-                val itemTouchHelper = ItemTouchHelper(itemTouchHelperCallback)
-                itemTouchHelper.attachToRecyclerView(binding.tasksList)
+//            initializeItemTouchHelper(taskAdapter)
+
             } catch (e: Exception) {
-                Log.e("Test","Error: ${e.message}")
-                e.printStackTrace()
+                Log.v("JSON File", "setOnDateChangeListener $e")
             }
         }
 
@@ -74,59 +111,71 @@ class CalendarFragment : Fragment() {
         val newTextTask: EditText = binding.newTask
 
         newTextTask.setOnEditorActionListener { _, actionId, event ->
+            try {
+                if (actionId == EditorInfo.IME_ACTION_DONE || (event != null && event.keyCode == KeyEvent.KEYCODE_ENTER && event.action == KeyEvent.ACTION_DOWN)) {
+                    val userInputName: String = newTextTask.text.toString()
 
-            if (actionId == EditorInfo.IME_ACTION_DONE || (event != null && event.keyCode == KeyEvent.KEYCODE_ENTER && event.action == KeyEvent.ACTION_DOWN)) {
-                val userInputName: String = newTextTask.text.toString()
+                    if (userInputName.isNotEmpty()) {
+                        val userInputTask = Task(userInputName, false)
+                        userCollection = readFromFile(fileName)
 
-                if (userInputName.isNotEmpty()) {
-                    val userInputTask = Task(userInputName, false)
-                    val userCollection = readFromFile(fileName)
+                        val existingDate: Collection? =
+                            userCollection.find { it.date == selectedDate }
 
-                    val existingDate: Collection? = userCollection.find<Collection> { it.date == selectedDate }
+                        if (existingDate != null) {
+                            existingDate.tasks.add(userInputTask)
+                        } else {
+                            val newCollection =
+                                Collection(selectedDate, mutableListOf(userInputTask))
+                            userCollection.add(newCollection)
+                        }
 
-                    if (existingDate != null) {
-                        existingDate.tasks = existingDate.tasks + userInputTask
-                    } else {
-                        val newDate = Collection(selectedDate, listOf(userInputTask))
-                        userCollection.add(newDate)
+                        Log.d("JSON File", "setOnEditorActionListener")
+                        writeToFile(fileName, userCollection)
+
+                        sortedTasks = getDailyTasksSorted(userCollection, selectedDate)
+//                        taskAdapter = TaskAdapter(sortedTasks)
+//                        taskListView.adapter = taskAdapter
+                        taskAdapter.updateData(sortedTasks)
+                        taskAdapter.notifyDataSetChanged()
+
+                        taskListView.visibility =
+                            if (sortedTasks.isEmpty()) View.GONE else View.VISIBLE // TODO: sortedTasks 말고 내부 확인?
+
                     }
 
-                    writeToFile(fileName, userCollection)
-
-                    val sortedTasks: MutableList<Task> = getDailyTasksSorted(userCollection, selectedDate)
-                    val taskAdapter = TaskAdapter(sortedTasks)
-                    taskAdapter.setOnItemRemovedListener { removedTask ->
-                        taskAdapter.removeItem(removedTask)
-                        Log.d("Test", "removed item: $removedTask")
-                    }
-                    taskListView.adapter = taskAdapter
+                    newTextTask.text.clear()
+                    true
+                } else {
+                    Log.v("JSON File", "here?")
+                    false
                 }
-
-                newTextTask.text.clear()
-                true
-            } else {
-                false
+            } catch (e: Exception) {
+                Log.v("JSON File", "setOnEditorActionListener $e")
             }
+            true
         }
 
         return root
     }
 
-    override fun onDestroyView() {
-        super.onDestroyView()
-        _binding = null
+    private fun initializeItemTouchHelper(taskAdapter: TaskAdapter) {
+        val itemTouchHelperCallback = ItemTouchHelperCallback(taskAdapter)
+        val itemTouchHelper = ItemTouchHelper(itemTouchHelperCallback)
+        itemTouchHelper.attachToRecyclerView(binding.tasksList)
     }
 
     private fun readFromFile(fileName: String): MutableList<Collection> {
         val file = File(requireContext().filesDir, fileName)
         val json = file.readText()
-        return gson.fromJson(json, Array<Collection>::class.java).toMutableList()
+        return gson.fromJson(json, object : TypeToken<MutableList<Collection>>() {}.type)
     }
 
     private fun writeToFile(fileName: String, data: MutableList<Collection>) {
         val file = File(requireContext().filesDir, fileName)
         val json = gson.toJson(data)
         file.writeText(json)
+        printJsonFileData(fileName)
     }
 
     private fun getDailyTasksSorted(userCollection: MutableList<Collection>, date: String): MutableList<Task> {
@@ -152,114 +201,22 @@ class CalendarFragment : Fragment() {
         outputStream.close()
     }
 
-}
+    private fun getToday(): String {
+        val calendar = Calendar.getInstance()
+        val dayOfMonth = calendar.get(Calendar.DAY_OF_MONTH)
+        val month = calendar.get(Calendar.MONTH)
+        val year = calendar.get(Calendar.YEAR)
+        return "${month + 1}/${dayOfMonth}/${year}"
+    }
 
-/*
-interface ItemTouchHelperAdapter {
-fun onItemMove(fromPosition: Int, toPosition: Int): Boolean
-fun onItemDismiss(position: Int)
-}
-class TaskAdapter(private val tasks: MutableList<Task>) : RecyclerView.Adapter<TaskAdapter.TaskViewHolder>(), ItemTouchHelperAdapter {
+    private fun printJsonFileData(fileName: String) {
+        val file = File(requireContext().filesDir, fileName)
+        val json = file.readText()
+        Log.d("JSON File", json)
+    }
 
-private val removedItems = mutableListOf<Task>()
-private var onItemRemoved: ((Task) -> Unit)? = null
-
-fun setOnItemRemovedListener(listener: (Task) -> Unit) {
-onItemRemoved = listener
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
+    }
 }
-
-override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): TaskViewHolder {
-val itemView = LayoutInflater.from(parent.context).inflate(R.layout.task_item, parent, false)
-return TaskViewHolder(itemView)
-}
-
-override fun onBindViewHolder(holder: TaskViewHolder, position: Int) {
-val task = tasks[position]
-holder.bind(task)
-}
-
-override fun getItemCount(): Int {
-return tasks.size
-}
-
-fun removeItem(removedTask: Task) {
-val position = tasks.indexOf(removedTask)
-if (position >= itemCount) return
-val item = tasks[position]
-removedItems.add(item)
-val actualList = tasks.filterNot { removedItems.contains(it) }
-tasks.clear()
-tasks.addAll(actualList)
-notifyDataSetChanged()
-}
-
-override fun onItemMove(fromPosition: Int, toPosition: Int): Boolean {
-return false
-}
-
-override fun onItemDismiss(position: Int) {
-tasks.removeAt(position)
-notifyItemRemoved(position)
-}
-
-inner class TaskViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-private val taskTextView: TextView = itemView.findViewById((R.id.textItem))
-
-init {
-val swipeCallback = object :
-ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT or ItemTouchHelper.RIGHT) {
-override fun onMove(
-recyclerView: RecyclerView,
-viewHolder: ViewHolder,
-target: RecyclerView.ViewHolder
-): Boolean {
-return false
-}
-
-override fun onSwiped(viewHolder: ViewHolder, direction: Int) {
-val position = viewHolder.adapterPosition
-val task = tasks[position]
-removeItem(task)
-onItemRemoved?.invoke(task)
-}
-}
-
-val itemTouchHelper = ItemTouchHelper(swipeCallback)
-itemTouchHelper.attachToRecyclerView(itemView.findViewById<RecyclerView>(R.id.tasksList))
-}
-
-fun bind(task: Task) {
-taskTextView.text = task.name
-}
-}
-
-}
-class ItemTouchHelperCallback(private val adapter: ItemTouchHelperAdapter) : ItemTouchHelper.Callback() {
-
-override fun isLongPressDragEnabled(): Boolean {
-return false
-}
-
-override fun isItemViewSwipeEnabled(): Boolean {
-return true
-}
-
-override fun getMovementFlags(recyclerView: RecyclerView, viewHolder: ViewHolder): Int {
-val dragFlags = ItemTouchHelper.UP or ItemTouchHelper.DOWN
-val swipeFlags = ItemTouchHelper.START or ItemTouchHelper.END
-return makeMovementFlags(dragFlags, swipeFlags)
-}
-
-override fun onMove(
-recyclerView: RecyclerView,
-viewHolder: ViewHolder,
-target: ViewHolder
-): Boolean {
-return adapter.onItemMove(viewHolder.adapterPosition, target.adapterPosition)
-}
-
-override fun onSwiped(viewHolder: ViewHolder, direction: Int) {
-adapter.onItemDismiss(viewHolder.adapterPosition)
-}
-}
-*/

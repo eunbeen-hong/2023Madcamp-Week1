@@ -14,29 +14,34 @@
         <CalendarView
             android:id="@+id/calendar"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
+            android:layout_height="wrap_content"
+            android:selectedWeekBackgroundColor="@color/grey"
+            android:layout_gravity="center" />
+
 
         <TextView
             android:id="@+id/selectedDate"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/init_date_select"
             android:textAlignment="center" />
 
         <EditText
             android:id="@+id/newTask"
             android:layout_width="wrap_content"
             android:layout_height="48dp"
+            android:layout_marginHorizontal="16dp"
             android:ems="10"
             android:hint="@string/add_task_hint"
             android:imeOptions="actionDone"
             android:inputType="text"
-            android:autofillHints="name"/>
+            android:autofillHints="name" />
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/tasksList"
             android:layout_width="match_parent"
-            android:layout_height="match_parent" />
+            android:layout_height="match_parent"
+            android:layout_marginHorizontal="16dp"
+            android:background="@color/purple_200" />
 
     </LinearLayout>
 

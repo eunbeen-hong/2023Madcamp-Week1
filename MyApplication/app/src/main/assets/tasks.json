@@ -34,11 +34,11 @@
     "tasks": [
       {
         "name": "create new task",
-        "completed": false
+        "completed": true
       },
       {
         "name": "delete existing task",
-        "completed": false
+        "completed": true
       },
       {
         "name": "view existing tasks",

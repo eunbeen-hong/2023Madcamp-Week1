@@ -3,18 +3,30 @@ package com.example.myapplication.ui.calendar
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.CheckBox
 import android.widget.TextView
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView
 import com.example.myapplication.R
+import com.google.gson.Gson
+import java.io.File
 
-class TaskAdapter(private val tasks: MutableList<Task>) : RecyclerView.Adapter<TaskAdapter.TaskViewHolder>(), ItemTouchHelperAdapter {
-
+class TaskAdapter(private var tasks: MutableList<Task>) : RecyclerView.Adapter<TaskAdapter.TaskViewHolder>(), ItemTouchHelperAdapter {
     private val removedItems = mutableListOf<Task>()
     private var onItemRemoved: ((Task) -> Unit)? = null
+    private var onCheckedChangeListener: ((Task, Boolean) -> Unit)? = null
 
     fun setOnItemRemovedListener(listener: (Task) -> Unit) {
         onItemRemoved = listener
+    }
+
+    fun setOnCheckedChangeListener(listener: (Task, Boolean) -> Unit) {
+        onCheckedChangeListener = listener
+    }
+
+    fun updateData(newTasks: MutableList<Task>) {
+        tasks = newTasks
+        notifyDataSetChanged()
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): TaskViewHolder {
@@ -33,13 +45,20 @@ class TaskAdapter(private val tasks: MutableList<Task>) : RecyclerView.Adapter<T
 
     fun removeItem(removedTask: Task) {
         val position = tasks.indexOf(removedTask)
-        if (position >= itemCount) return
-        val item = tasks[position]
-        removedItems.add(item)
-        val actualList = tasks.filterNot { removedItems.contains(it) }
-        tasks.clear()
-        tasks.addAll(actualList)
-        notifyDataSetChanged()
+        // TODO
+//        if (position >= itemCount) return tasks
+//        val item = tasks[position]
+//        removedItems.add(item)
+//        val actualList = tasks.filterNot { removedItems.contains(it) }
+//        tasks.clear()
+//        tasks.addAll(actualList)
+//        notifyDataSetChanged()
+//        return actualList.toMutableList()
+        if (position != -1) {
+            tasks.removeAt(position)
+            onItemRemoved?.invoke(removedTask)
+            notifyItemRemoved(position)
+        }
     }
 
     override fun onItemMove(fromPosition: Int, toPosition: Int): Boolean {
@@ -47,12 +66,14 @@ class TaskAdapter(private val tasks: MutableList<Task>) : RecyclerView.Adapter<T
     }
 
     override fun onItemDismiss(position: Int) {
+        val removedTask = tasks[position]
         tasks.removeAt(position)
+        onItemRemoved?.invoke(removedTask)
         notifyItemRemoved(position)
     }
 
     inner class TaskViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        private val taskTextView: TextView = itemView.findViewById((R.id.textItem))
+        private val taskCheckboxView: CheckBox = itemView.findViewById((R.id.checkItem))
 
         init {
             val swipeCallback = object :
@@ -65,21 +86,27 @@ class TaskAdapter(private val tasks: MutableList<Task>) : RecyclerView.Adapter<T
                     return false
                 }
 
+
                 override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
                     val position = viewHolder.adapterPosition
                     val task = tasks[position]
                     removeItem(task)
-                    onItemRemoved?.invoke(task)
                 }
             }
 
             val itemTouchHelper = ItemTouchHelper(swipeCallback)
-            itemTouchHelper.attachToRecyclerView(itemView.findViewById<RecyclerView>(R.id.tasksList))
+            itemTouchHelper.attachToRecyclerView(itemView.findViewById(R.id.tasksList))
         }
 
         fun bind(task: Task) {
-            taskTextView.text = task.name
+            taskCheckboxView.text = task.name
+            taskCheckboxView.isChecked = task.completed
+
+            taskCheckboxView.setOnCheckedChangeListener { _, isChecked ->
+                task.completed = isChecked
+                notifyItemChanged(adapterPosition)
+                onCheckedChangeListener?.invoke(task, isChecked)
+            }
         }
     }
-
 }
