@@ -1,7 +1,10 @@
 package com.example.myapplication.ui.gallery
 
+import android.app.Activity.RESULT_OK
 import android.app.AlertDialog
 import android.content.Context
+import android.content.Intent
+import android.graphics.Bitmap
 import android.os.Bundle
 import android.provider.MediaStore
 import android.view.LayoutInflater
@@ -11,12 +14,13 @@ import android.widget.AdapterView
 import android.widget.GridView
 import android.widget.ImageView
 import android.widget.Toast
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import com.bumptech.glide.Glide
 import com.example.myapplication.R
 import com.example.myapplication.databinding.FragmentGalleryBinding
-import java.io.File
 
 class GalleryFragment : Fragment() {
 
@@ -36,13 +40,20 @@ class GalleryFragment : Fragment() {
         _binding = FragmentGalleryBinding.inflate(inflater, container, false)
         val root: View = binding.root
         val gridView: GridView = binding.galleryGridView
+        val cameraButton = binding.galleryCameraAppFloatingButton
 
         val uriArr = getAllPhotos()
         gridView.adapter = GridAdapter(requireContext(), uriArr) // 사진 목록을 adapter로 전달한 후, adapter을 gridView에 연결
 
-        gridView.onItemClickListener = AdapterView.OnItemClickListener { _, _, position, _ ->
+        gridView.onItemClickListener = AdapterView.OnItemClickListener { _, _, position, _ -> // 사진 하나를 클릭하면 실행된다.
             showImagePopup(requireContext(), uriArr, position, gridView.adapter as GridAdapter)
         }
+
+        cameraButton.setOnClickListener {
+            Toast.makeText(requireContext(), "카메라 실행", Toast.LENGTH_SHORT).show()
+            executeCameraApp()
+        }
+
         return root
     }
 
@@ -66,7 +77,7 @@ class GalleryFragment : Fragment() {
         return uriArr
     }
 
-    private fun showImagePopup(context: Context, uriArr: ArrayList<String>, position: Int, adapter: GridAdapter) {
+    private fun showImagePopup(context: Context, uriArr: ArrayList<String>, position: Int, adapter: GridAdapter) { // 사진을 누르면 크게 보여준다
         val imagePath = uriArr[position]
         val builder = AlertDialog.Builder(context)
         val dialogView = LayoutInflater.from(context).inflate(R.layout.fragment_gallery_pick, null)
@@ -76,11 +87,11 @@ class GalleryFragment : Fragment() {
 
         Glide.with(context).load(imagePath).into(imageView)
 
-        builder.setPositiveButton("Close") {dialog, _ -> dialog.dismiss()}
+        builder.setPositiveButton("닫기") {dialog, _ -> dialog.dismiss()}
 
-        builder.setNeutralButton("Remove") {_, _ ->
+        builder.setNeutralButton("삭제") {_, _ ->
 
-            val builderDelete = AlertDialog.Builder(context)
+            val builderDelete = AlertDialog.Builder(context) // 삭제 확인을 위한 새로운 창을 띄운다.
             builderDelete.setTitle("삭제하기")
             builderDelete.setMessage("정말로 해당 파일을 삭제하시겠습니까?")
 
@@ -99,12 +110,28 @@ class GalleryFragment : Fragment() {
         builder.create().show()
     }
 
-    private fun deletePhoto(imagePath: String): Boolean {
+    private fun deletePhoto(imagePath: String): Boolean { // 삭제 버튼을 누르면 해당 사진을 저장소에서 삭제한다.
         val resolver = requireContext().contentResolver
         val selection = MediaStore.Images.Media.DATA + "=?"
         val selectionArgs = arrayOf(imagePath)
         val deletedRows = resolver.delete(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, selection, selectionArgs)
         return deletedRows > 0
+    }
+
+    private fun executeCameraApp() { // 플로팅 카메라 버튼을 누르면 카메라 앱을 실행한다.
+        val takePictureIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
+        activityResult.launch(takePictureIntent)
+    }
+
+    private val activityResult: ActivityResultLauncher<Intent> = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()) {
+        if(it.resultCode == RESULT_OK && it.data != null) {
+            // val extras = it.data!!.extras // 값 담기
+
+            Toast.makeText(requireContext(), "저장 완료!", Toast.LENGTH_SHORT).show()
+        } else {
+            Toast.makeText(requireContext(), "저장 취소?", Toast.LENGTH_SHORT).show()
+        }
     }
 
     override fun onDestroyView() {
