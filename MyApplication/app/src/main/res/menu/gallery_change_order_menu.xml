@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/gallery_menu_order"
+        android:title="@string/gallery_menu_order" />
+
+    <item
+        android:id="@+id/gallery_menu_album"
+        android:title="@string/gallery_menu_album" />
+
+</menu>

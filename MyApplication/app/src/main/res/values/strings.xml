@@ -5,5 +5,8 @@
     <string name="title_calendar">Calendar</string>
     <string name="init_date_select">Select a Date</string>
     <string name="add_task_hint">Write a new task</string>
-    <string name="gallery_camera">execute Camera App</string>
+    <string name="gallery_camera">Execute camera app</string>
+    <string name="gallery_order">Change the order</string>
+    <string name="gallery_menu_order">정렬</string>
+    <string name="gallery_menu_album">앨범</string>
 </resources>
