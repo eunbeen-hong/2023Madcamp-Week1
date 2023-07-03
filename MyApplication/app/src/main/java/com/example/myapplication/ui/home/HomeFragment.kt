@@ -8,6 +8,8 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.*
 import androidx.fragment.app.Fragment
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.example.myapplication.R
 import com.example.myapplication.databinding.FragmentHomeBinding
 import com.google.gson.Gson
@@ -22,8 +24,9 @@ class HomeFragment : Fragment() {
     private val binding get() = _binding!!
 
     private val gson = Gson()
-    private lateinit var adapter: ArrayAdapter<String>
     private lateinit var people: MutableList<Person>
+    private lateinit var adapter: PersonAdapter
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -36,14 +39,13 @@ class HomeFragment : Fragment() {
         copyAssetToFile(requireContext(), fileName)
 
         people = readFromFile(fileName)
-        val listView: ListView = binding.listView
-        adapter = ArrayAdapter(requireContext(), android.R.layout.simple_list_item_1, people.map { "${it.name} : ${it.number}" })
-        listView.adapter = adapter
-
-        listView.onItemClickListener = AdapterView.OnItemClickListener { _, _, position, _ ->
-            val person = people[position]
+        val recyclerView: RecyclerView = binding.recyclerView // 변경점 2: listView를 recyclerView로 변경
+        adapter = PersonAdapter(people) { person ->
             showDetailsDialog(person)
         }
+        recyclerView.adapter = adapter
+        recyclerView.layoutManager = LinearLayoutManager(requireContext()) // 변경점 3: layoutManager 설정
+
 
         binding.addContact.setOnClickListener {
             showAddContactDialog(fileName, adapter)
@@ -101,8 +103,41 @@ class HomeFragment : Fragment() {
     }
 
 
+
+    class PersonAdapter(private var people: List<Person>, private val onClick: (Person) -> Unit) :
+        RecyclerView.Adapter<PersonAdapter.PersonViewHolder>() {
+
+        class PersonViewHolder(private val view: View, private val onClick: (Person) -> Unit) :
+            RecyclerView.ViewHolder(view) {
+            private val textView: TextView = view.findViewById(android.R.id.text1)
+
+            fun bind(person: Person) {
+                textView.text = "${person.name} : ${person.number}"
+                view.setOnClickListener { onClick(person) }
+            }
+        }
+
+        fun updateData(newPeople: List<Person>) {
+            this.people = newPeople
+            notifyDataSetChanged()
+        }
+
+        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PersonViewHolder {
+            val view = LayoutInflater.from(parent.context).inflate(android.R.layout.simple_list_item_1, parent, false)
+            return PersonViewHolder(view, onClick)
+        }
+
+        override fun onBindViewHolder(holder: PersonViewHolder, position: Int) {
+            holder.bind(people[position])
+        }
+
+        override fun getItemCount() = people.size
+    }
+
+
+
     // 연락처 추가
-    private fun showAddContactDialog(fileName: String, adapter: ArrayAdapter<String>) {
+    private fun showAddContactDialog(fileName: String, adapter: PersonAdapter) {
         val builder = AlertDialog.Builder(requireContext())
         builder.setTitle("새로운 연락처를 추가하세요!")
 
@@ -128,9 +163,7 @@ class HomeFragment : Fragment() {
                 people.add(newPerson)
                 writeToFile(fileName, people)
 
-                adapter.clear() // 기존 데이터 제거
-                adapter.addAll(people.map { "${it.name} : ${it.number}" }) // 새로운 데이터 추가
-                adapter.notifyDataSetChanged() // ListView 갱신
+                adapter.updateData(people)
 
                 dialog.dismiss()
             }
@@ -185,7 +218,7 @@ class HomeFragment : Fragment() {
     }
 
 
-    private fun showEditContactDialog(person: Person, adapter: ArrayAdapter<String>) {
+    private fun showEditContactDialog(person: Person, adapter: PersonAdapter) {
         val builder = AlertDialog.Builder(requireContext())
         builder.setTitle("연락처 수정")
 
@@ -240,20 +273,17 @@ class HomeFragment : Fragment() {
         people = readFromFile(fileName)
         people.remove(person)
         writeToFile(fileName, people)
-        adapter.clear() // 기존 데이터 제거
-        adapter.addAll(people.map { "${it.name} : ${it.number}" }) // 새로운 데이터 추가
+        adapter.updateData(people)
     }
 
-    private fun updateContact(oldPerson: Person, newPerson: Person, adapter: ArrayAdapter<String>) {
+    private fun updateContact(oldPerson: Person, newPerson: Person, adapter: PersonAdapter) {
         val fileName = "numbers.json"
         people = readFromFile(fileName)
         val index = people.indexOf(oldPerson)
         if (index != -1) {
             people[index] = newPerson
             writeToFile(fileName, people)
-            adapter.clear() // 기존 데이터 제거
-            adapter.addAll(people.map { "${it.name} : ${it.number}" }) // 새로운 데이터 추가
-            adapter.notifyDataSetChanged() // ListView 갱신
+            adapter.updateData(people)
         }
     }
 
