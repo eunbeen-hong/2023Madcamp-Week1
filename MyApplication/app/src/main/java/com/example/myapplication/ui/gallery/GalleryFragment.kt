@@ -39,7 +39,7 @@ import java.util.Locale
 import kotlin.properties.Delegates
 
 
-data class Album(val albumName: String, var images: List<String>)
+data class Album(var albumName: String, var images: List<String>)
 class GalleryFragment : Fragment() {
 
     private var _binding: FragmentGalleryBinding? = null
@@ -131,7 +131,6 @@ class GalleryFragment : Fragment() {
             var selectedAlbumPosition by Delegates.notNull<Int>()
             builderAlbum.setSingleChoiceItems(albumNames.toTypedArray(), -1) {_, position -> // 항목을 고르면 앨범 이름을 기억한다.
                 selectedAlbumPosition = position
-                Toast.makeText(context, "선택 완료", Toast.LENGTH_SHORT).show()
             }
             builderAlbum.setPositiveButton("이동") {_, _ -> // 이동 버튼을 누르면 해당 사진을 해당 앨범에 추가한다.
                 val updatedImages: MutableList<String> = albums[selectedAlbumPosition].images as MutableList<String>
@@ -279,7 +278,7 @@ class GalleryFragment : Fragment() {
                     builderOrder.create().show()
                     true
                 }
-                R.id.gallery_menu_album -> {
+                R.id.gallery_menu_album_select -> {
                     // 앨범 선택을 위한 새로운 창을 띄운다.
                     val builderAlbum = AlertDialog.Builder(context)
                     builderAlbum.setTitle("앨범 선택")
@@ -292,10 +291,11 @@ class GalleryFragment : Fragment() {
                         albumNames.add(album.albumName)
                     }
 
-                    var selectedAlbumPosition by Delegates.notNull<Int>()
-                    builderAlbum.setSingleChoiceItems(albumNames.toTypedArray(), -1) {_, position -> // 항목을 고르면 앨범 순서를 기억한다.
+                    var selectedAlbumPosition = 0 // 항목을 고르면 앨범 순서를 기억한다.
+                    builderAlbum.setSingleChoiceItems(albumNames.toTypedArray(), 0) {_, position ->
                         selectedAlbumPosition = position
                     }
+
                     builderAlbum.setPositiveButton("확인") {_, _ -> // 확인 버튼을 누르면 해당 앨범을 보여준다
                         val selectedAlbumImages = if (selectedAlbumPosition == 0) { // 0은 앨범 없이 전체 사진을 가리킨다.
                             getAllPhotos()
@@ -307,57 +307,132 @@ class GalleryFragment : Fragment() {
                         adapter.notifyDataSetChanged()
                         Toast.makeText(context, "앨범 선택 완료", Toast.LENGTH_SHORT).show()
                     }
-                    builderAlbum.setNeutralButton("앨범 추가") {_, _ ->
-                        // 새로운 앨범을 생성하기 위한 새로운 창을 띄운다.
-                        val builderNewAlbum = AlertDialog.Builder(requireContext())
-                        builderNewAlbum.setTitle("새로운 앨범 생성")
-                        val view = layoutInflater.inflate(R.layout.gallery_add_album, null)
-                        builderNewAlbum.setView(view)
 
-                        builderNewAlbum.setPositiveButton("생성", null) // 입력한 이름을 검증한 후에, 앨범을 생성한다
-                        val created = builderNewAlbum.create()
-                        created.setOnShowListener { dialog ->
-                            val positiveButton = created.getButton(AlertDialog.BUTTON_POSITIVE)
-                            positiveButton.setOnClickListener {
-                                val newAlbumName = view.findViewById<EditText>(R.id.gallery_make_new_album_TextView).text.toString()
-                                when (checkAlbumName(newAlbumName, albumNames)) { // 만약 입력한 이름이 올바르지 않을 경우 dialog 창이 닫히지 않는다
-                                    0 -> {
-                                        val newAlbum: Album = Album(newAlbumName, emptyList())
-                                        albums.add(newAlbum)
-                                        writeToFile(albumFile, albums)
-                                        Toast.makeText(context, "앨범 생성 성공", Toast.LENGTH_SHORT).show()
-                                        dialog.dismiss()
-                                    }
-                                    1 -> {
-                                        Toast.makeText(context, "앨범 이름을 입력하세요.", Toast.LENGTH_SHORT).show()
-                                    }
-                                    2 -> {
-                                        Toast.makeText(context, "앨범 이름이 중복됩니다.", Toast.LENGTH_SHORT).show()
-                                    }
+                    builderAlbum.setNeutralButton("앨범 삭제", null)
+                    builderAlbum.setNegativeButton("이름 변경", null)
+                    val createdAlbum = builderAlbum.create()
+
+                    createdAlbum.setOnShowListener {dialog -> // 앨범 삭제 버튼
+                        val neutralButton = createdAlbum.getButton(AlertDialog.BUTTON_NEUTRAL)
+                        neutralButton.setOnClickListener {
+                            if (selectedAlbumPosition == 0) { // "전체 사진"을 고르면, 아무 일도 일어나지 않는다.
+                                Toast.makeText(context, "전체 사진은 앨범이 아닙니다.\n(삭제 불가)", Toast.LENGTH_SHORT).show()
+                            } else {
+                                dialog.dismiss()
+                                // 해당 앨범을 삭제하기 위한 새로운 창을 띄운다.
+                                val builderDeleteAlbum = AlertDialog.Builder(requireContext())
+                                val deletedAlbumName = albumNames[selectedAlbumPosition]
+                                builderDeleteAlbum.setTitle("앨범 삭제")
+                                builderDeleteAlbum.setMessage("정말로 $deletedAlbumName 앨범을 삭제하겠습니까?")
+
+                                builderDeleteAlbum.setPositiveButton("삭제") { _, _ ->
+                                    albums.removeAt(selectedAlbumPosition - 1)
+                                    writeToFile(albumFile, albums)
+                                    Toast.makeText(context, "$deletedAlbumName 앨범 삭제 완료", Toast.LENGTH_SHORT).show()
                                 }
+                                builderDeleteAlbum.setNegativeButton("취소", null)
+
+                                builderDeleteAlbum.create().show()
                             }
                         }
-
-                        builderNewAlbum.setNegativeButton("취소") {dialog, _ -> dialog.dismiss()}
-
-                        created.show()
                     }
-                    builderAlbum.setNegativeButton("취소") {dialog, _ -> dialog.dismiss()}
-                    builderAlbum.create().show()
+
+                    createdAlbum.setOnShowListener {dialog -> // 앨범 이름 변경 버튼
+                        val negativeButton = createdAlbum.getButton(AlertDialog.BUTTON_NEGATIVE)
+                        negativeButton.setOnClickListener {
+                            if (selectedAlbumPosition == 0) { // "전체 사진"을 고르면, 아무 일도 일어나지 않는다.
+                                Toast.makeText(context, "전체 사진은 앨범이 아닙니다.\n(이름 변경 불가)", Toast.LENGTH_SHORT).show()
+                            } else {
+                                dialog.dismiss() // 기존의 앨범 선택 창은 닫는다.
+                                // 앨범 이름을 바꾸기 위한 새로운 창을 띄운다.
+                                val builderModifyName = AlertDialog.Builder(requireContext())
+                                builderModifyName.setTitle("앨범 이름 변경")
+                                val addAlbumView = layoutInflater.inflate(R.layout.gallery_add_album, null)
+                                builderModifyName.setView(addAlbumView)
+
+                                builderModifyName.setNegativeButton("취소") {dialog, _ -> dialog.dismiss()}
+                                builderModifyName.setPositiveButton("변경", null) // 입력한 이름을 검증한 후에, 앨범 이름을 변경한다
+                                val createdModifyName = builderModifyName.create()
+
+                                createdModifyName.setOnShowListener { dialog ->
+                                    val positiveButton = createdModifyName.getButton(AlertDialog.BUTTON_POSITIVE)
+                                    positiveButton.setOnClickListener {
+                                        val newAlbumName = addAlbumView.findViewById<EditText>(R.id.gallery_make_new_album_TextView).text.toString()
+                                        if (newAlbumName.isEmpty()) {
+                                            Toast.makeText(context, "앨범 이름을 입력하세요.", Toast.LENGTH_SHORT).show()
+                                        }
+                                        else if (albumNames.contains(newAlbumName)) {
+                                            Toast.makeText(context, "앨범 이름이 중복됩니다.", Toast.LENGTH_SHORT).show()
+                                        }
+                                        else {
+                                            val prevAlbumImages = albums[selectedAlbumPosition-1].images
+                                            val newAlbum = Album(newAlbumName, prevAlbumImages)
+                                            albums.removeAt(selectedAlbumPosition-1)
+                                            albums.add(selectedAlbumPosition-1, newAlbum)
+                                            writeToFile(albumFile, albums)
+
+                                            albumNames[selectedAlbumPosition] = newAlbumName // 변경한 앨범 이름을 "앨범 선택 dialog"에 반영한다.
+                                            builderAlbum.setSingleChoiceItems(albumNames.toTypedArray(), 0) { _, position ->
+                                                selectedAlbumPosition = position
+                                            }
+                                            Toast.makeText(context, "앨범 이름 변경 성공", Toast.LENGTH_SHORT).show()
+                                            dialog.dismiss()
+                                            builderAlbum.create().show() // 업데이트된 앨범 선택 창을 띄운다.
+                                        }
+                                    }
+                                }
+                                createdModifyName.show()
+                            }
+                        }
+                    }
+                    createdAlbum.show()
+                    true
+                }
+                R.id.gallery_menu_album_make -> {
+                    val albumFile = "albums.json"
+                    copyAssetToFile(requireContext(), albumFile)
+                    val albums = readFromFile(albumFile)
+                    val albumNames: MutableList<String> = mutableListOf()
+                    for (album in albums) {
+                        albumNames.add(album.albumName)
+                    }
+
+                    // 새로운 앨범을 생성하기 위한 새로운 창을 띄운다.
+                    val builderNewAlbum = AlertDialog.Builder(requireContext())
+                    builderNewAlbum.setTitle("새로운 앨범 생성")
+                    val addAlbumView = layoutInflater.inflate(R.layout.gallery_add_album, null)
+                    builderNewAlbum.setView(addAlbumView)
+
+                    builderNewAlbum.setNegativeButton("취소") {dialog, _ -> dialog.dismiss()}
+                    builderNewAlbum.setPositiveButton("생성", null) // 입력한 이름을 검증한 후에, 앨범을 생성한다
+                    val createdNewAlbum = builderNewAlbum.create()
+
+                    createdNewAlbum.setOnShowListener { dialog ->
+                        val positiveButton = createdNewAlbum.getButton(AlertDialog.BUTTON_POSITIVE)
+                        positiveButton.setOnClickListener {
+                            val newAlbumName = addAlbumView.findViewById<EditText>(R.id.gallery_make_new_album_TextView).text.toString()
+                            if (newAlbumName.isEmpty()) {
+                                Toast.makeText(context, "앨범 이름을 입력하세요.", Toast.LENGTH_SHORT).show()
+                            }
+                            else if (albumNames.contains(newAlbumName)) {
+                                Toast.makeText(context, "앨범 이름이 중복됩니다.", Toast.LENGTH_SHORT).show()
+                            }
+                            else {
+                                val newAlbum = Album(newAlbumName, emptyList())
+                                albums.add(newAlbum)
+                                writeToFile(albumFile, albums)
+                                Toast.makeText(context, "앨범 생성 성공", Toast.LENGTH_SHORT).show()
+                                dialog.dismiss()
+                            }
+                        }
+                    }
+                    createdNewAlbum.show()
                     true
                 }
                 else -> false
             }
         }
         popupMenu.show()
-    }
-
-    private fun checkAlbumName(albumName: String, albumNames: MutableList<String>): Int {
-        return if (albumName.isEmpty()) {
-            1
-        } else if (albumNames.contains(albumName)) {
-            2
-        } else 0
     }
 
     // 팝업 메뉴 - 정렬 기능 (선택 앨범에 대해서도 가능)
@@ -429,3 +504,17 @@ class GalleryFragment : Fragment() {
         _binding = null
     }
 }
+/*
+* <한 일>
+* - 사진 정렬 기능
+* - 앨범 기능 (종료해도 유지, 삭제하면 날라감)
+* - 앨범 생성 기능
+* - 앨범 생성 시 이름 확인 기능
+* - 앨범에 따른 정렬 기능
+* - 앨범 이름 변경 기능
+* - 앨범 삭제 기능 (외않되?)
+*
+* <해야 할 일>
+* - 카메라 촬영 후 저장소에 저장 구현
+* - 사진을 삭제할 때 앨범에도 반영하기
+* */
