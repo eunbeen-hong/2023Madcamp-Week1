@@ -3,13 +3,23 @@
     android:id="@+id/taskTextView"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical">
+    android:weightSum="10">
 
     <CheckBox
         android:id="@+id/checkItem"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:text="@string/app_name"
-        android:textSize="20sp" />
+        android:textSize="20sp"
+        android:layout_weight="9" />
+
+    <Button
+        android:id="@+id/deleteButton"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="X"
+        android:layout_weight="1"
+        android:textColor="@color/grey"
+        android:background="@color/transparent"/>
 
 </LinearLayout>
