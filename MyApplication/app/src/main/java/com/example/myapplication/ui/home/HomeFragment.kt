@@ -138,10 +138,19 @@ class HomeFragment : Fragment() {
 
         class PersonViewHolder(private val view: View, private val onClick: (Person) -> Unit) :
             RecyclerView.ViewHolder(view) {
-            private val textView: TextView = view.findViewById(android.R.id.text1)
+            private val textView: TextView = view.findViewById(R.id.text)
+            private val imageView: ImageView = view.findViewById(R.id.profileImage)
 
             fun bind(person: Person) {
                 textView.text = "${person.name} : ${person.number}"
+                if (!person.imageUri.isNullOrEmpty()) {
+                    try {
+                        val imageUri = Uri.parse(person.imageUri)
+                        imageView.setImageURI(imageUri)
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
+                }
                 view.setOnClickListener { onClick(person) }
             }
         }
@@ -152,7 +161,7 @@ class HomeFragment : Fragment() {
         }
 
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PersonViewHolder {
-            val view = LayoutInflater.from(parent.context).inflate(android.R.layout.simple_list_item_1, parent, false)
+            val view = LayoutInflater.from(parent.context).inflate(R.layout.item_person, parent, false)
             return PersonViewHolder(view, onClick)
         }
 
@@ -162,6 +171,7 @@ class HomeFragment : Fragment() {
 
         override fun getItemCount() = people.size
     }
+
 
 
 
