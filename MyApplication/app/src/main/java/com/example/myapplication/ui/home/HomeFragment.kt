@@ -1,8 +1,13 @@
 package com.example.myapplication.ui.home
 
+import android.app.Activity
 import android.app.AlertDialog
 import android.content.Context
+import android.content.Intent
+import android.graphics.Bitmap
+import android.net.Uri
 import android.os.Bundle
+import android.provider.MediaStore
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -12,20 +17,34 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.myapplication.R
 import com.example.myapplication.databinding.FragmentHomeBinding
+import com.example.myapplication.databinding.PersonDetailsDialogBinding
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import java.io.*
 
-data class Person(val name: String, val number: String, val email: String, val instagram: String, val github: String)
+data class Person(
+    val name: String,
+    val number: String,
+    val email: String,
+    val instagram: String,
+    val github: String,
+    val imageUri: String?
+)
 
 class HomeFragment : Fragment() {
 
     private var _binding: FragmentHomeBinding? = null
     private val binding get() = _binding!!
-
+    private var currentPerson: Person? = null
+    private var currentDialog: AlertDialog? = null
+    private var currentImageView: ImageView? = null
+    private var selectedImageUri: Uri? = null
     private val gson = Gson()
     private lateinit var people: MutableList<Person>
     private lateinit var adapter: PersonAdapter
+
+    private val IMAGE_PICK_CODE = 1000
+    private var bitmap: Bitmap? = null
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -45,7 +64,6 @@ class HomeFragment : Fragment() {
         }
         recyclerView.adapter = adapter
         recyclerView.layoutManager = LinearLayoutManager(requireContext()) // 변경점 3: layoutManager 설정
-
 
         binding.addContact.setOnClickListener {
             showAddContactDialog(fileName, adapter)
@@ -72,6 +90,17 @@ class HomeFragment : Fragment() {
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
+    }
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (resultCode == Activity.RESULT_OK && requestCode == IMAGE_PICK_CODE) {
+            currentPerson?.let { person ->
+                val updatedPerson = person.copy(imageUri = data?.data?.toString()) // toString 메소드 사용
+                updateContact(person, updatedPerson, adapter)
+            }
+            // Dialog를 다시 보여주는 대신, 이미지뷰만 업데이트한다.
+            currentImageView?.setImageURI(data?.data)
+        }
     }
 
     private fun copyAssetToFile(context: Context, fileName: String) {
@@ -158,7 +187,7 @@ class HomeFragment : Fragment() {
                 val instagram = if (view.findViewById<EditText>(R.id.instagram).text.toString().isBlank()) "none" else view.findViewById<EditText>(R.id.instagram).text.toString()
                 val github = if (view.findViewById<EditText>(R.id.github).text.toString().isBlank()) "none" else view.findViewById<EditText>(R.id.github).text.toString()
 
-                val newPerson = Person(name, number, email, instagram, github)
+                val newPerson = Person(name, number, email, instagram, github, getSelectedImageUriAsString())
                 people = readFromFile(fileName)
                 people.add(newPerson)
                 writeToFile(fileName, people)
@@ -176,19 +205,40 @@ class HomeFragment : Fragment() {
 
     // 세부 정보
     private fun showDetailsDialog(person: Person) {
+        currentPerson = person
         val builder = AlertDialog.Builder(requireContext())
         builder.setTitle("세부 정보")
 
-        val view = layoutInflater.inflate(R.layout.person_details_dialog, null)
-        builder.setView(view)
+        val dialogView = LayoutInflater.from(context).inflate(R.layout.person_details_dialog, null)
+        val profileImage = dialogView.findViewById<ImageView>(R.id.profileImage)
+        builder.setView(dialogView)
+        currentImageView = profileImage
 
-        val nameTextView = view.findViewById<TextView>(R.id.nameTextView)
-        val numberTextView = view.findViewById<TextView>(R.id.numberTextView)
-        val emailTextView = view.findViewById<TextView>(R.id.emailTextView)
-        val instagramTextView = view.findViewById<TextView>(R.id.instagramTextView)
-        val githubTextView = view.findViewById<TextView>(R.id.githubTextView)
-        val deleteButton = view.findViewById<Button>(R.id.deleteButton)
-        val editButton = view.findViewById<Button>(R.id.editButton)
+        // Set default image from drawable
+        val drawableId = resources.getIdentifier("ic_name", "drawable", requireContext().packageName)
+        profileImage.setImageResource(drawableId)
+
+        // If user selected an image, set it
+        if (selectedImageUri != null) {
+            profileImage.setImageURI(selectedImageUri)
+        }
+        // Or if there is a saved image URI for the person, set that
+        else if (!person.imageUri.isNullOrEmpty()) {
+            try {
+                val imageUri = Uri.parse(person.imageUri)
+                profileImage.setImageURI(imageUri)
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+
+        val nameTextView = dialogView.findViewById<TextView>(R.id.nameTextView)
+        val numberTextView = dialogView.findViewById<TextView>(R.id.numberTextView)
+        val emailTextView = dialogView.findViewById<TextView>(R.id.emailTextView)
+        val instagramTextView = dialogView.findViewById<TextView>(R.id.instagramTextView)
+        val githubTextView = dialogView.findViewById<TextView>(R.id.githubTextView)
+        val deleteButton = dialogView.findViewById<Button>(R.id.deleteButton)
+        val editButton = dialogView.findViewById<Button>(R.id.editButton)
 
         // Update the TextViews
         nameTextView.text = "이름: ${person.name}"
@@ -213,12 +263,33 @@ class HomeFragment : Fragment() {
             showEditContactDialog(person, adapter)
         }
 
+        profileImage.setOnClickListener {
+            val intent = Intent(Intent.ACTION_PICK)
+            intent.type = "image/*"
+            startActivityForResult(intent, IMAGE_PICK_CODE)
+        }
+
+        if (selectedImageUri != null) {
+            profileImage.setImageURI(selectedImageUri)
+        }
+
         dialog.window?.setBackgroundDrawableResource(R.drawable.dialog_border)
+        dialog.show()
+
+        currentDialog = dialog
         dialog.show()
     }
 
 
+
+
+    private fun getSelectedImageUriAsString(): String? {
+        return selectedImageUri?.toString()
+    }
+
+
     private fun showEditContactDialog(person: Person, adapter: PersonAdapter) {
+        currentPerson = person
         val builder = AlertDialog.Builder(requireContext())
         builder.setTitle("연락처 수정")
 
@@ -245,7 +316,7 @@ class HomeFragment : Fragment() {
                 val updatedInstagram = view.findViewById<EditText>(R.id.instagram).text.toString()
                 val updatedGithub = view.findViewById<EditText>(R.id.github).text.toString()
 
-                val updatedPerson = Person(updatedName, updatedNumber, updatedEmail, updatedInstagram, updatedGithub)
+                val updatedPerson = Person(updatedName, updatedNumber, updatedEmail, updatedInstagram, updatedGithub, getSelectedImageUriAsString())
                 updateContact(person, updatedPerson, adapter)
 
                 dialog.dismiss()
@@ -254,6 +325,9 @@ class HomeFragment : Fragment() {
 
         dialog.window?.setBackgroundDrawableResource(R.drawable.dialog_border) // 배경 설정
         dialog.show() // AlertDialog 보여주기
+
+        currentDialog = dialog
+        dialog.show()
     }
 
 
