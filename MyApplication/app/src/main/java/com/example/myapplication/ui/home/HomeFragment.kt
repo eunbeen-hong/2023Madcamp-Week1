@@ -53,6 +53,16 @@ class HomeFragment : Fragment() {
             showSearchDialog()
         }
 
+        binding.fab.setOnClickListener {
+            if (binding.addContact.visibility == View.VISIBLE) {
+                binding.addContact.visibility = View.GONE
+                binding.searchContact.visibility = View.GONE
+            } else {
+                binding.addContact.visibility = View.VISIBLE
+                binding.searchContact.visibility = View.VISIBLE
+            }
+        }
+
 
         return root
     }
