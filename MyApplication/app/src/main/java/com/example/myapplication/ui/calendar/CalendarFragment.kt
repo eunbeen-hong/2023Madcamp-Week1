@@ -45,8 +45,13 @@ class CalendarFragment : Fragment() {
         var userCollection: MutableList<Collection> = readFromFile(fileName)
         var selectedDate: String = getToday()
         var sortedTasks: MutableList<Task> = getDailyTasksSorted(userCollection, selectedDate)
-        var taskAdapter = TaskAdapter(sortedTasks, requireActivity())
-        taskListView.adapter = taskAdapter
+        lateinit var taskAdapter: TaskAdapter
+        val action = {
+            taskAdapter = TaskAdapter(sortedTasks, requireActivity())
+            taskListView.adapter = taskAdapter
+        }
+        retryOperation(action, 5, 1000)
+
         taskAdapter.setOnItemRemovedListener { removedTask ->
             val action = {
                 val selectedCollection = userCollection.find { it.date == selectedDate }
@@ -79,7 +84,6 @@ class CalendarFragment : Fragment() {
         }
 
         initializeItemTouchHelper(taskAdapter)
-
 
         taskListView.visibility = if (sortedTasks.isEmpty()) View.GONE else View.VISIBLE
 
