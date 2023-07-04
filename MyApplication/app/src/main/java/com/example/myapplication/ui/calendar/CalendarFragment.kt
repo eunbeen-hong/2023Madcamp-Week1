@@ -11,13 +11,11 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.EditText
-import android.widget.ImageButton
-import android.widget.ListView
-import android.widget.Toast
+import android.widget.*
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.bumptech.glide.Glide
 import com.example.myapplication.R
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
@@ -29,14 +27,19 @@ import java.text.SimpleDateFormat
 import com.example.myapplication.ui.home.Person
 import com.example.myapplication.ui.home.HomeFragment.PersonAdapter
 
-data class Post(
-    var title: String,
-    var location: String,
-    var date: String,
+class Post(
+    val title: String,
+    val location: String,
+    val date: String,
     var imgList: MutableList<Uri>,
     var contactList: MutableList<String>,
-    var note: String
+    val note: String,
+    var contactImgList: MutableList<String> = mutableListOf() // 빈 리스트로 초기화
 )
+
+
+
+
 
 class CalendarFragment : Fragment() {
     private var _binding: FragmentFeedBinding? = null
@@ -185,7 +188,7 @@ class CalendarFragment : Fragment() {
         }
     }
 
-    private fun showContactsDialog(people: MutableList<Person>, selectedPeople: MutableList<Person>) {
+    private fun showContactsDialog(people: MutableList<Person>, selectedPeople: MutableList<Person>, contactListLayout: LinearLayout) {
         val builder = AlertDialog.Builder(requireContext())
         val view = layoutInflater.inflate(R.layout.dialog_contacts, null)
         val listView = view.findViewById<RecyclerView>(R.id.contacts_list)
@@ -196,7 +199,19 @@ class CalendarFragment : Fragment() {
         val adapter = PersonAdapter(people) { person ->
             selectedPeople.add(person)
             Toast.makeText(requireContext(), "${person.name} selected", Toast.LENGTH_SHORT).show()
+
+            // Create a new ImageView and load the selected contact's profile image into it.
+            val imageView = ImageView(requireContext())
+            imageView.layoutParams = ViewGroup.LayoutParams(100, 100) // Replace with the size you want.
+
+            // Load the image using Glide
+            Glide.with(this@CalendarFragment)
+                .load(Uri.parse(person.imageUri))
+                .into(imageView)
+
+            contactListLayout.addView(imageView)
         }
+
         listView.adapter = adapter
 
         builder.setView(view)
@@ -219,9 +234,10 @@ class CalendarFragment : Fragment() {
 
         val selectedPeople = mutableListOf<Person>()
 
+        val contactListLayout = view.findViewById<LinearLayout>(R.id.contactList2)
         val addContactButton = view.findViewById<ImageButton>(R.id.contact_addbutton)
         addContactButton.setOnClickListener {
-            showContactsDialog(people, selectedPeople)
+            showContactsDialog(people, selectedPeople, contactListLayout)
         }
 
         dialog.setOnShowListener {
@@ -233,7 +249,7 @@ class CalendarFragment : Fragment() {
                 val date = view.findViewById<EditText>(R.id.new_date).text.toString().let {
                     it.ifBlank { "none" }
                 }
-                val location = view.findViewById<EditText>(R.id.new_title).text.toString().let {
+                val location = view.findViewById<EditText>(R.id.new_location).text.toString().let {
                     it.ifBlank { "none" }
                 }
                 val note = view.findViewById<EditText>(R.id.new_note).text.toString().let {
@@ -241,8 +257,18 @@ class CalendarFragment : Fragment() {
                 }
 
                 val contacts = selectedPeople.map { it.number }
+                val contactImages = selectedPeople.mapNotNull { it.imageUri } // get the image URIs
 
-                val newPost = Post(title, location, date, mutableListOf(), contacts.toMutableList(), note)
+                val newPost = Post(
+                    title,
+                    location,
+                    date,
+                    mutableListOf(),
+                    contacts.toMutableList(),
+                    note,
+                    contactImages.toMutableList()
+                )
+
                 postList = readFromFile(fileName, object : TypeToken<MutableList<Post>>() {})
                 postList.add(newPost)
                 writeToFile(fileName, postList)

@@ -160,6 +160,9 @@ class PostAdapter(private val context: Context, private var posts: MutableList<P
             )
             contactView.layoutParams = layoutParams
 
+            // If contact is in the form of Uri String, parse it and load the image
+            LoadImageTask(contactImageButton).execute(Uri.parse(contact))
+
             contactList.addView(contactView)
 
             // TODO: when clicked, go to contact detail
