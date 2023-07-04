@@ -29,7 +29,7 @@ class GridAdapter(private val context: Context, private val addressList: ArrayLi
         val imageView = ImageView(context)
         val display = context.resources.displayMetrics
         imageView.scaleType = ImageView.ScaleType.CENTER_CROP
-        imageView.setPadding(3, 3, 3, 3)
+        imageView.setPadding(5, 5, 5, 5)
         imageView.layoutParams = LinearLayout.LayoutParams(display.widthPixels/3,display.widthPixels/3)
         Glide.with(context).load(addressList[position]).into(imageView)
         return imageView

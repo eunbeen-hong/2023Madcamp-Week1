@@ -19,6 +19,7 @@ import android.widget.EditText
 import android.widget.GridView
 import android.widget.ImageView
 import android.widget.PopupMenu
+import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
@@ -60,7 +61,8 @@ class GalleryFragment : Fragment() {
         val root: View = binding.root
         val gridView: GridView = binding.galleryGridView
         val cameraButton = binding.galleryCameraAppFloatingButton
-        val orderButton = binding.galleryOrderFloatingButton
+        val menuButton = binding.galleryMenuImageButton
+        val albumTitleTextView = binding.galleryAlbumTitleTextView
 
         val uriArr = getAllPhotos()
         val gridViewAdapter = GridAdapter(requireContext(), uriArr) // 사진 목록을 adapter에 전달한 후,
@@ -75,8 +77,8 @@ class GalleryFragment : Fragment() {
             executeCameraApp()
         }
 
-        orderButton.setOnClickListener {view -> // 버튼을 누르면 정렬 메뉴가 나타난다.
-            showPopupMenu(view, uriArr, gridViewAdapter)
+        menuButton.setOnClickListener {view -> // 버튼을 누르면 메뉴가 나타난다.
+            showPopupMenu(view, uriArr, gridViewAdapter, albumTitleTextView)
         }
 
         return root
@@ -93,7 +95,7 @@ class GalleryFragment : Fragment() {
             while (cursor.moveToNext()) { // 사진 경로 Uri 가져오기
                 val uri = cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA))
                 if (prevUriArr == null || prevUriArr.contains(uri)) { // null은 앨범 구분이 없는 상태이다. (전체 사진을 uriArr에 담는다)
-                    uriArr.add(uri)                                   // 만약 album을 parameter로 받으면, 앨범 안에 있는 사진에 대해서만 uriArr에 추가한다.
+                    uriArr.add(uri)                                   // 만약 prevUriArr을 parameter로 받으면, 앨범 안에 있는 사진에 대해서만 uriArr에 추가한다.
                 }
             }
             cursor.close()
@@ -166,12 +168,38 @@ class GalleryFragment : Fragment() {
 
     // 3. SD 저장소에서 사진 삭제하기
     private fun deletePhoto(imagePath: String): Boolean { // 삭제 버튼을 누르면 해당 사진을 저장소에서 삭제한다.
+        fun getImageId(imagePath: String): Long { // 보조 함수
+            val uri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI
+            val projection = arrayOf(MediaStore.Images.Media._ID)
+            val selection = "${MediaStore.Images.Media.DATA}=?"
+            val selectionArgs = arrayOf(imagePath)
+            val cursor = requireContext().contentResolver.query(uri, projection, selection, selectionArgs, null)
+            val imageId = if (cursor != null && cursor.moveToFirst()) {
+                val columnIndex = cursor.getColumnIndexOrThrow(MediaStore.Images.Media._ID)
+                cursor.getLong(columnIndex)
+            } else {
+                null
+            }
+            cursor?.close()
+            return imageId ?: -1
+        }
+
         val resolver = requireContext().contentResolver
-        val selection = MediaStore.Images.Media.DATA + "=?"
-        val selectionArgs = arrayOf(imagePath)
-        val deletedRows = resolver.delete(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, selection, selectionArgs)
-        return deletedRows > 0
+        return if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) { // 안드로이드 낮은 버전에서는 기존 방식대로 한다.
+            val selection = MediaStore.Images.Media.DATA + "=?"
+            val selectionArgs = arrayOf(imagePath)
+            val deletedRows = resolver.delete(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, selection, selectionArgs)
+            deletedRows > 0
+        } else { // 안드로이드 높은 버전에서는 새로운 방식대로 한다.
+            val uri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI
+            val selection = "${MediaStore.Images.Media._ID}=?"
+            val imageId = getImageId(imagePath) // imagePath로부터 이미지의 ID를 가져옴
+            val selectionArgs = arrayOf(imageId.toString())
+            val deletedRows = resolver.delete(uri, selection, selectionArgs)
+            deletedRows > 0
+        }
     }
+
 
     private lateinit var currentPhotoPath: String
     
@@ -256,12 +284,13 @@ class GalleryFragment : Fragment() {
     }
 
     // 팝업 메뉴 띄우기
-    private fun showPopupMenu(view: View, uriArr: ArrayList<String>, adapter: GridAdapter) { // 정렬 버튼을 누르면 팝업 메뉴가 나타난다. 선택한 item에 따라 사진이 정렬된다.
+    private fun showPopupMenu(view: View, uriArr: ArrayList<String>, adapter: GridAdapter, albumTitle: TextView) { // 정렬 버튼을 누르면 팝업 메뉴가 나타난다. 선택한 item에 따라 사진이 정렬된다.
         val popupMenu = PopupMenu(requireContext(), view)
         popupMenu.menuInflater.inflate(R.menu.gallery_change_order_menu, popupMenu.menu)
 
         popupMenu.setOnMenuItemClickListener { menuItem ->
             when (menuItem.itemId) {
+                // 1. 메뉴에서 "정렬" 항목을 클릭할 경우
                 R.id.gallery_menu_order -> {
                     val builderOrder = AlertDialog.Builder(context) // 정렬을 위한 새로운 창을 띄운다.
                     builderOrder.setTitle("정렬하기")
@@ -278,6 +307,8 @@ class GalleryFragment : Fragment() {
                     builderOrder.create().show()
                     true
                 }
+
+                // 2. 메뉴에서 "앨범 선택" 항목을 클릭할 경우
                 R.id.gallery_menu_album_select -> {
                     // 앨범 선택을 위한 새로운 창을 띄운다.
                     val builderAlbum = AlertDialog.Builder(context)
@@ -305,6 +336,7 @@ class GalleryFragment : Fragment() {
                         uriArr.clear()
                         uriArr.addAll(selectedAlbumImages)
                         adapter.notifyDataSetChanged()
+                        albumTitle.text = albumNames[selectedAlbumPosition] // 상단의 앨범 이름을 표시하는 TextView에도 반영
                         Toast.makeText(context, "앨범 선택 완료", Toast.LENGTH_SHORT).show()
                     }
 
@@ -312,7 +344,8 @@ class GalleryFragment : Fragment() {
                     builderAlbum.setNegativeButton("이름 변경", null)
                     val createdAlbum = builderAlbum.create()
 
-                    createdAlbum.setOnShowListener {dialog -> // 앨범 삭제 버튼
+                    createdAlbum.setOnShowListener {dialog ->
+                        // 앨범 삭제 버튼
                         val neutralButton = createdAlbum.getButton(AlertDialog.BUTTON_NEUTRAL)
                         neutralButton.setOnClickListener {
                             if (selectedAlbumPosition == 0) { // "전체 사진"을 고르면, 아무 일도 일어나지 않는다.
@@ -329,15 +362,16 @@ class GalleryFragment : Fragment() {
                                     albums.removeAt(selectedAlbumPosition - 1)
                                     writeToFile(albumFile, albums)
                                     Toast.makeText(context, "$deletedAlbumName 앨범 삭제 완료", Toast.LENGTH_SHORT).show()
+                                    dialog.dismiss()
                                 }
-                                builderDeleteAlbum.setNegativeButton("취소", null)
+                                builderDeleteAlbum.setNegativeButton("취소") {dialog, _ ->
+                                    dialog.dismiss()
+                                }
 
                                 builderDeleteAlbum.create().show()
                             }
                         }
-                    }
-
-                    createdAlbum.setOnShowListener {dialog -> // 앨범 이름 변경 버튼
+                        // 앨범 이름 변경 버튼
                         val negativeButton = createdAlbum.getButton(AlertDialog.BUTTON_NEGATIVE)
                         negativeButton.setOnClickListener {
                             if (selectedAlbumPosition == 0) { // "전체 사진"을 고르면, 아무 일도 일어나지 않는다.
@@ -370,14 +404,8 @@ class GalleryFragment : Fragment() {
                                             albums.removeAt(selectedAlbumPosition-1)
                                             albums.add(selectedAlbumPosition-1, newAlbum)
                                             writeToFile(albumFile, albums)
-
-                                            albumNames[selectedAlbumPosition] = newAlbumName // 변경한 앨범 이름을 "앨범 선택 dialog"에 반영한다.
-                                            builderAlbum.setSingleChoiceItems(albumNames.toTypedArray(), 0) { _, position ->
-                                                selectedAlbumPosition = position
-                                            }
                                             Toast.makeText(context, "앨범 이름 변경 성공", Toast.LENGTH_SHORT).show()
                                             dialog.dismiss()
-                                            builderAlbum.create().show() // 업데이트된 앨범 선택 창을 띄운다.
                                         }
                                     }
                                 }
@@ -388,6 +416,8 @@ class GalleryFragment : Fragment() {
                     createdAlbum.show()
                     true
                 }
+
+                // 3. 메뉴에서 "앨범 생성" 항목을 클릭할 경우
                 R.id.gallery_menu_album_make -> {
                     val albumFile = "albums.json"
                     copyAssetToFile(requireContext(), albumFile)
@@ -435,9 +465,9 @@ class GalleryFragment : Fragment() {
         popupMenu.show()
     }
 
-    // 팝업 메뉴 - 정렬 기능 (선택 앨범에 대해서도 가능)
+    // 팝업 메뉴 중 정렬 기능을 위한 함수 (선택한 앨범에 대해서도 정렬 가능)
     private fun changeGridViewOrder(position: Int, uriArr: ArrayList<String>, adapter: GridAdapter) {
-        // ["이름 (가나다순)", "이름 (가나다 역순)", "날짜 (오름차순)", "날짜 (내림차순)"]
+        // orderList = ["이름 (가나다순)", "이름 (가나다 역순)", "날짜 (오름차순)", "날짜 (내림차순)"]
         when(position) {
             0 -> {
                 val orderedUriArr = getAllPhotos(MediaStore.Images.ImageColumns.DISPLAY_NAME + " ASC", uriArr)
@@ -509,12 +539,17 @@ class GalleryFragment : Fragment() {
 * - 사진 정렬 기능
 * - 앨범 기능 (종료해도 유지, 삭제하면 날라감)
 * - 앨범 생성 기능
-* - 앨범 생성 시 이름 확인 기능
+* - 앨범 이름 검증 기능
 * - 앨범에 따른 정렬 기능
 * - 앨범 이름 변경 기능
-* - 앨범 삭제 기능 (외않되?)
+* - 앨범 삭제 기능
 *
 * <해야 할 일>
 * - 카메라 촬영 후 저장소에 저장 구현
 * - 사진을 삭제할 때 앨범에도 반영하기
+* 
+* <새로운 기능>
+* - 위치 기능
+* - 주소록 태그 기능
+*
 * */
