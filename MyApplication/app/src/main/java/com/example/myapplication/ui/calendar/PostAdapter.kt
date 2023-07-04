@@ -4,25 +4,33 @@ import android.app.Activity
 import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
+import android.media.Image
 import android.net.Uri
 import android.text.SpannableStringBuilder
 import android.view.KeyEvent
 import android.view.LayoutInflater
+import android.view.ScrollCaptureCallback
 import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
 import android.widget.BaseAdapter
 import android.widget.Button
 import android.widget.EditText
+import android.widget.ImageButton
+import android.widget.ImageView
+import android.widget.LinearLayout
+import android.widget.ScrollView
 import android.widget.TextView
 import androidx.core.app.ActivityCompat.startActivityForResult
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.myapplication.R
+import org.w3c.dom.Text
 
 class PostAdapter(private val context: Context, private var posts: MutableList<Post>) : BaseAdapter() {
     private var onItemRemoved: ((Post) -> Unit)? = null
     private var onTextEditListener : ((Post, TextView) -> Unit)? = null
+    private var onAddPhotoListener : ((Post) -> Unit)? = null
     private val REQUEST_CODE_GALLERY = 1001
 
     fun setOnItemRemovedListener(listener: (Post) -> Unit) {
@@ -33,17 +41,20 @@ class PostAdapter(private val context: Context, private var posts: MutableList<P
         onTextEditListener = listener
     }
 
+    fun setOnAddPhotoListener (listener: (Post) -> Unit) {
+        onAddPhotoListener = listener
+    }
+
     fun updateData(newPosts: MutableList<Post>) {
         posts.clear()
         posts.addAll(newPosts)
         notifyDataSetChanged()
     }
 
-    fun updateImageList(position: Int, imageList: MutableList<Uri>) {
-        if (position >= 0 && position < posts.size) {
-            val post = posts[position]
-            post.imgList.clear()
-            post.imgList.addAll(imageList)
+    fun updateImageList(currentPost: Post?, imageList: MutableList<Uri>) {
+        if (currentPost != null) {
+            currentPost.imgList.clear()
+            currentPost.imgList.addAll(imageList)
             notifyDataSetChanged()
         }
     }
@@ -77,8 +88,8 @@ class PostAdapter(private val context: Context, private var posts: MutableList<P
         val travelName: TextView = view.findViewById(R.id.travelName)
         val location: TextView = view.findViewById(R.id.location)
         val date: EditText = view.findViewById(R.id.date)
-        val imageList: RecyclerView = view.findViewById(R.id.imageList)
-        val contactList: RecyclerView = view.findViewById(R.id.contactList)
+        val imageList: LinearLayout = view.findViewById(R.id.imageList)
+        val contactList: LinearLayout = view.findViewById(R.id.contactList)
         val note: TextView = view.findViewById(R.id.note)
         val addPhotoButton: Button = view.findViewById(R.id.add_photo)
 
@@ -87,16 +98,45 @@ class PostAdapter(private val context: Context, private var posts: MutableList<P
         date.text = SpannableStringBuilder(post.date); date.tag = "date"
         note.text = post.note; note.tag = "note"
 
-        val imageAdapter = ImageAdapter(post.imgList)
-        val imageLayoutManager = LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false)
-        imageList.layoutManager = imageLayoutManager
-        imageList.adapter = imageAdapter
+        /////////////////////images////////////////////////
+        for (uri in post.imgList) {
+            val imageView = ImageView(context)
+            imageView.setImageURI(uri)
 
-        val contactAdapter = ContactAdapter(post.contactList)
-        val contactLayoutManager = LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false)
-        contactList.layoutManager = contactLayoutManager
-        contactList.adapter = contactAdapter
+            val layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+            imageView.layoutParams = layoutParams
 
+            imageList.addView(imageView)
+        }
+
+        /////////////////////contacts////////////////////////
+        for (contact in post.contactList) {
+            val contactView = LayoutInflater.from(context).inflate(R.layout.contact_item, contactList, false) as LinearLayout
+//            val contactTextView = contactView.findViewById<TextView>(R.id.contactName) // 이름 안뜨게 변경
+            val contactImageButton = contactView.findViewById<ImageButton>(R.id.contactImage)
+
+            // TODO: show contact info
+////             contactTextView.text = contact.name // 이름 안뜨게 변경
+//            contactImageButton = contact.image
+
+            val layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+            contactView.layoutParams = layoutParams
+
+            contactList.addView(contactView)
+
+            // TODO: when clicked, go to contact detail
+            contactImageButton.setOnClickListener {
+                // ?
+            }
+        }
+
+        /////////////////////edit////////////////////////
         travelName.setOnClickListener {
             enterEditMode(post, travelName)
         }
@@ -110,21 +150,28 @@ class PostAdapter(private val context: Context, private var posts: MutableList<P
             enterEditMode(post, note)
         }
 
+        /////////////////////add photo////////////////////////
         addPhotoButton.setOnClickListener {
-            val galleryIntent = Intent(Intent.ACTION_GET_CONTENT)
-            galleryIntent.type = "image/*"
-            galleryIntent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true)
-
-            try {
-                startActivityForResult(context as Activity, galleryIntent, REQUEST_CODE_GALLERY, null)
-            } catch (e: ActivityNotFoundException) {
-                // Handle the case when no gallery app is available
-            }
+            addPhoto(post)
         }
 
         return view
     }
 
+    private fun addPhoto(post: Post) {
+        val galleryIntent = Intent(Intent.ACTION_GET_CONTENT)
+        galleryIntent.type = "image/*"
+        galleryIntent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true)
+
+        try {
+//            startActivityForResult(context as Activity, galleryIntent, REQUEST_CODE_GALLERY, null)
+            val activity = context as Activity
+            activity.startActivityForResult(galleryIntent, REQUEST_CODE_GALLERY)
+            onAddPhotoListener ?.invoke(post)
+        } catch (e: ActivityNotFoundException) {
+            // Handle the case when no gallery app is available
+        }
+    }
     private fun enterEditMode(post: Post, textView: TextView) {
         textView.setOnClickListener(null)
         textView.isClickable = false

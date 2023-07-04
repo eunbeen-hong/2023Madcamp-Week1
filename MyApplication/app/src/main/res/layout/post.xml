@@ -49,45 +49,62 @@
         android:layout_margin="5dp"
         android:fontFamily="@font/nanumsquareround_otfeb"
         android:textSize="17sp"
-        app:layout_constraintBottom_toTopOf="@+id/imageList"
+        app:layout_constraintBottom_toTopOf="@+id/imageListView"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/travelName" />
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/imageList"
+
+    <HorizontalScrollView
+        android:id="@+id/imageListView"
         android:layout_width="match_parent"
         android:layout_height="300dp"
-        android:layout_margin="5dp"
         android:background="@color/grey"
-        android:orientation="horizontal"
-        app:layout_constraintBottom_toTopOf="@+id/contactList"
+        android:layout_margin="5dp"
+        tools:layout_editor_absoluteX="16dp"
+        tools:layout_editor_absoluteY="221dp"
+        app:layout_constraintBottom_toTopOf="@+id/contactListView"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.551"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/date">
 
-    <Button
-        android:id="@+id/add_photo"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="+" />
+        <LinearLayout
+            android:id="@+id/imageList"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:orientation="horizontal"
+            android:fontFamily="@font/nanumsquareround_otfeb"
+            android:textSize="16sp">
+            <Button
+                android:id="@+id/add_photo"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="+"
+                android:layout_gravity="center"/>
+        </LinearLayout>
+    </HorizontalScrollView>
 
-    </androidx.recyclerview.widget.RecyclerView>
-
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/contactList"
+    <HorizontalScrollView
+        android:id="@+id/contactListView"
         android:layout_width="match_parent"
         android:layout_height="53dp"
         android:background="@color/purple_200"
-        android:orientation="horizontal"
         android:layout_margin="5dp"
-        android:fontFamily="@font/nanumsquareround_otfeb"
-        android:textSize="16sp"
+        tools:layout_editor_absoluteX="16dp"
+        tools:layout_editor_absoluteY="221dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/imageList" />
+        app:layout_constraintTop_toBottomOf="@+id/imageListView">
+
+        <LinearLayout
+            android:id="@+id/contactList"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="horizontal"
+            android:fontFamily="@font/nanumsquareround_otfeb"
+            android:textSize="16sp" />
+    </HorizontalScrollView>
 
     <EditText
         android:id="@+id/note"
@@ -104,9 +121,8 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.517"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/contactList"
+        app:layout_constraintTop_toBottomOf="@+id/contactListView"
         app:layout_constraintVertical_bias="0.0" />
-
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -17,7 +17,7 @@ class ContactAdapter(private val contactList: List<String>) : RecyclerView.Adapt
 
     override fun onBindViewHolder(holder: ContactViewHolder, position: Int) {
         val contact = contactList[position]
-        holder.contactTextView.text = contact
+//        holder.contactTextView.text = contact // 이름 안뜨게 변경
         holder.contactImgView.setImageResource(R.drawable.check_false)
     }
 
@@ -26,7 +26,7 @@ class ContactAdapter(private val contactList: List<String>) : RecyclerView.Adapt
     }
 
     inner class ContactViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        val contactTextView: TextView = itemView.findViewById(R.id.contactName)
+//        val contactTextView: TextView = itemView.findViewById(R.id.contactName) // 이름 안뜨게 변경
         val contactImgView: ImageView = itemView.findViewById(R.id.contactImage)
     }
 }

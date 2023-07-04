@@ -9,6 +9,7 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.AbsListView
 import android.widget.Button
 import android.widget.ListView
 import androidx.fragment.app.Fragment
@@ -27,9 +28,12 @@ data class Post(var tripName: String, var location: String, var date: String,
 
 class CalendarFragment : Fragment() {
     private var _binding: FragmentFeedBinding? = null
+    private var currentPost: Post? = null
+
     private val binding get() = _binding!!
     private val gson = Gson()
     private val REQUEST_CODE_GALLERY = 1001
+
     private lateinit var postAdapter: PostAdapter
 
     override fun onCreateView(
@@ -41,14 +45,15 @@ class CalendarFragment : Fragment() {
         val root: View = binding.root
 
         val postListView: ListView = binding.postListView
-        val fab: FloatingActionButton = binding.fabPost
+        val fab_newPost: FloatingActionButton = binding.newPost
 
         val fileName = "posts.json"
         copyAssetsToFile(requireContext(), fileName)
 
-        // TODO: edit, add, delete
+        // TODO: addition (in fab)
+        // TODO: deletion (add delete button)
 
-        var today: String = getToday()
+//        var today: String = getToday()
         var postList: MutableList<Post> = readFromFile(fileName)
         var sortedPosts: MutableList<Post> = getPostSorted(postList)
 
@@ -56,6 +61,8 @@ class CalendarFragment : Fragment() {
         postListView.adapter = postAdapter
         postListView.visibility = if (sortedPosts.isEmpty()) View.GONE else View.VISIBLE
 
+
+        /////////////////////edit////////////////////////
         postAdapter.setOnTextEditListener { post, textView ->
             val newText = textView.text.toString()
             val position = postList.indexOf(post)
@@ -74,85 +81,34 @@ class CalendarFragment : Fragment() {
             }
         }
 
-//        /////////////////////////change complete status/////////////////////////
-//        taskAdapter.setOnCheckedChangeListener { task, isChecked ->
-//            task.completed = isChecked
-//            writeToFile(fileName, userCollection)
-//            sortedTasks = getDailyTasksSorted(userCollection, selectedDate)
-//            taskAdapter.updateData(sortedTasks)
-//        }
+        var currentScrollPosition = 0
+
+        postListView.setOnScrollListener(object : AbsListView.OnScrollListener {
+            override fun onScrollStateChanged(view: AbsListView, scrollState: Int) {
+                // Handle scroll state changes if needed
+            }
+
+            override fun onScroll(view: AbsListView, firstVisibleItem: Int, visibleItemCount: Int, totalItemCount: Int) {
+                // Update the current scroll position
+                currentScrollPosition = postListView.firstVisiblePosition
+            }
+        })
+
+        postListView.setOnFocusChangeListener { _, hasFocus ->
+            if (hasFocus) {
+                postListView.post {
+                    postListView.setSelection(currentScrollPosition)  // Scroll to the current scroll position
+                }
+            }
+        }
 
 
-//        /////////////////////////remove task/////////////////////////
-//        taskAdapter.setOnItemRemovedListener { removedTask ->
-//            val selectedCollection = userCollection.find {it.date == selectedDate}
-//            selectedCollection?.let {collection ->
-//                val index = collection.tasks.indexOf(removedTask)
-//                if (index != -1)
-//                {
-//                    collection.tasks.removeAt(index)
-//                    if(collection.tasks.isEmpty()) {
-//                        userCollection.remove(collection)
-//                    }
-//                    writeToFile(fileName, userCollection)
-//                    sortedTasks = getDailyTasksSorted(userCollection, selectedDate)
-//                    taskAdapter.updateData(sortedTasks)
-//                }
-//            }
-//        }
-
-
-//        /////////////////////////select date/////////////////////////
-//        binding.calendar.setOnDateChangeListener { _, year, month, dayOfMonth ->
-//            selectedDate = "${month + 1}/${dayOfMonth}/${year}"
-//            binding.selectedDate.text = selectedDate
-//
-//            sortedTasks = getDailyTasksSorted(userCollection, selectedDate)
-//            taskAdapter.updateData(sortedTasks)
-//            taskAdapter.notifyDataSetChanged()
-//            taskListView.visibility =
-//                if (sortedTasks.isEmpty()) View.GONE else View.VISIBLE
-//        }
-
-//        /////////////////////////add new task/////////////////////////
-//        newTextTask.setOnEditorActionListener { _, actionId, event ->
-//
-//            if (actionId == EditorInfo.IME_ACTION_DONE || (event != null && event.keyCode == KeyEvent.KEYCODE_ENTER && event.action == KeyEvent.ACTION_DOWN)) {
-//                val userInputName: String = newTextTask.text.toString()
-//
-//                if (userInputName.isNotEmpty()) {
-//                    val userInputTask = Task(userInputName, false)
-//                    userCollection = readFromFile(fileName)
-//
-//                    val existingDate: Collection? =
-//                        userCollection.find { it.date == selectedDate }
-//
-//                    if (existingDate != null) {
-//                        existingDate.tasks.add(userInputTask)
-//                    } else {
-//                        val newCollection =
-//                            Collection(selectedDate, mutableListOf(userInputTask))
-//                        userCollection.add(newCollection)
-//                    }
-//
-//                    writeToFile(fileName, userCollection)
-//
-//                    sortedTasks = getDailyTasksSorted(userCollection, selectedDate)
-//                    taskAdapter.updateData(sortedTasks)
-////                    taskAdapter.notifyDataSetChanged()
-//
-//                    taskListView.visibility =
-//                        if (sortedTasks.isEmpty()) View.GONE else View.VISIBLE // TODO: sortedTasks 말고 내부 확인?
-//
-//                }
-//
-//                newTextTask.text.clear()
-//                true
-//            } else {
-////                false // false: 재입력시 입력칸 다시 클릭
-//                true
-//            }
-//        }
+        /////////////////////add photo////////////////////////
+        postAdapter.setOnAddPhotoListener { post ->
+            currentPost = post
+            writeToFile(fileName, postList)
+            postAdapter.updateData(sortedPosts)
+        }
 
         return root
     }
@@ -181,9 +137,7 @@ class CalendarFragment : Fragment() {
                 null
             }
         }
-
         return postList
-
     }
 
     private fun copyAssetsToFile(context: Context, fileName: String) {
@@ -217,10 +171,10 @@ class CalendarFragment : Fragment() {
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
 
-        if (requestCode == REQUEST_CODE_GALLERY && resultCode == Activity.RESULT_OK) {
+        if (requestCode == REQUEST_CODE_GALLERY && resultCode == Activity.RESULT_OK && data != null) {
             val imageList = mutableListOf<Uri>()
 
-            val clipData = data?.clipData
+            val clipData = data.clipData
             if (clipData != null) {
                 // Multiple images were selected
                 for (i in 0 until clipData.itemCount) {
@@ -235,7 +189,10 @@ class CalendarFragment : Fragment() {
                 }
             }
 
-            postAdapter.updateImageList(currentPosition, imageList)
+            currentPost?.let {
+                postAdapter.updateImageList(currentPost, imageList)
+            }
+            postAdapter.notifyDataSetChanged()
         }
     }
 
