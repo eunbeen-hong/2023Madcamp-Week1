@@ -4,8 +4,6 @@ import android.app.Activity
 import android.app.AlertDialog
 import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
-import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -71,12 +69,14 @@ class PersonItemAdapter(context: Context, private val items: List<PersonItem>) :
 class HomeFragment : Fragment() {
 
     private var _binding: FragmentHomeBinding? = null
-    private val binding get() = _binding!!
     private var currentPerson: Person? = null
     private var currentDialog: AlertDialog? = null
     private var currentImageView: ImageView? = null
     private var selectedImageUri: Uri? = null
+
+    private val binding get() = _binding!!
     private val gson = Gson()
+
     private lateinit var people: MutableList<Person>
     private lateinit var adapter: PersonAdapter
 
@@ -232,7 +232,8 @@ class HomeFragment : Fragment() {
             val positiveButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE)
             positiveButton.setOnClickListener {
                 val name = if (view.findViewById<EditText>(R.id.name).text.toString().isBlank()) "none" else view.findViewById<EditText>(R.id.name).text.toString()
-                val number = if (view.findViewById<EditText>(R.id.number).text.toString().isBlank()) "none" else view.findViewById<EditText>(R.id.number).text.toString()
+                val numberEditText = view.findViewById<EditText>(R.id.number)
+                val number = if (numberEditText.text.toString().isBlank()) "none" else formatPhoneNumber(numberEditText.text.toString())
                 val email = if (view.findViewById<EditText>(R.id.email).text.toString().isBlank()) "none" else view.findViewById<EditText>(R.id.email).text.toString()
                 val instagram = if (view.findViewById<EditText>(R.id.instagram).text.toString().isBlank()) "none" else view.findViewById<EditText>(R.id.instagram).text.toString()
                 val github = if (view.findViewById<EditText>(R.id.github).text.toString().isBlank()) "none" else view.findViewById<EditText>(R.id.github).text.toString()
@@ -251,6 +252,29 @@ class HomeFragment : Fragment() {
         dialog.window?.setBackgroundDrawableResource(R.drawable.dialog_border) // 배경 설정
 
         dialog.show() // AlertDialog 보여주기
+    }
+
+    private fun formatPhoneNumber(number: String): String {
+        val digits = number.replace("-", "")
+        val formattedNumber = StringBuilder()
+        var segmentStart = 0
+        val segmentLengths = intArrayOf(3, 4, 4) // 3글자, 4글자, 4글자
+
+        for ((index, length) in segmentLengths.withIndex()) {
+            val segmentEnd = segmentStart + length
+            if (digits.length >= segmentEnd) {
+                val segment = digits.substring(segmentStart, segmentEnd)
+                formattedNumber.append(segment)
+                if (index < segmentLengths.lastIndex) {
+                    formattedNumber.append("-")
+                }
+                segmentStart = segmentEnd
+            } else {
+                formattedNumber.append(digits.substring(segmentStart))
+                break
+            }
+        }
+        return formattedNumber.toString()
     }
 
     // 세부 정보
