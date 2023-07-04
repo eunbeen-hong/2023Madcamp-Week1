@@ -1,6 +1,7 @@
 package com.example.myapplication.ui.calendar
 
 import android.app.Activity
+import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -12,6 +13,7 @@ import android.view.ViewGroup
 import android.widget.AbsListView
 import android.widget.Button
 import android.widget.ListView
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
@@ -23,13 +25,20 @@ import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.Calendar
 
-data class Post(var tripName: String, var location: String, var date: String,
-                var imgList: MutableList<Uri>, var contactList: MutableList<String>, var note: String)
+data class Post(
+    var tripName: String,
+    var location: String,
+    var date: String,
+    var imgList: MutableList<Uri>, // Nullable 제거
+    var contactList: MutableList<String>,
+    var note: String
+)
+
 
 class CalendarFragment : Fragment() {
     private var _binding: FragmentFeedBinding? = null
     private var currentPost: Post? = null
-
+    private val fileName = "posts.json"
     private val binding get() = _binding!!
     private val gson = Gson()
     private val REQUEST_CODE_GALLERY = 1001
@@ -106,9 +115,16 @@ class CalendarFragment : Fragment() {
         /////////////////////add photo////////////////////////
         postAdapter.setOnAddPhotoListener { post ->
             currentPost = post
-            writeToFile(fileName, postList)
-            postAdapter.updateData(sortedPosts)
+            val galleryIntent = Intent(Intent.ACTION_GET_CONTENT)
+            galleryIntent.type = "image/*"
+            galleryIntent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true)
+            try {
+                startActivityForResult(galleryIntent, REQUEST_CODE_GALLERY)
+            } catch (e: ActivityNotFoundException) {
+                // Handle the case when no gallery app is available
+            }
         }
+
 
         return root
     }
@@ -170,31 +186,28 @@ class CalendarFragment : Fragment() {
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == REQUEST_CODE_GALLERY && resultCode == Activity.RESULT_OK) {
+            val clipData = data?.clipData
+            val uri = data?.data
+            val selectedUris = mutableListOf<Uri>()
 
-        if (requestCode == REQUEST_CODE_GALLERY && resultCode == Activity.RESULT_OK && data != null) {
-            val imageList = mutableListOf<Uri>()
-
-            val clipData = data.clipData
             if (clipData != null) {
-                // Multiple images were selected
                 for (i in 0 until clipData.itemCount) {
-                    val imageUri = clipData.getItemAt(i).uri
-                    imageList.add(imageUri)
+                    val item = clipData.getItemAt(i)
+                    val itemUri = item.uri
+                    selectedUris.add(itemUri)
                 }
-            } else {
-                // Single image was selected
-                val imageUri = data?.data
-                if (imageUri != null) {
-                    imageList.add(imageUri)
-                }
+            } else if (uri != null) {
+                selectedUris.add(uri)
             }
 
-            currentPost?.let {
-                postAdapter.updateImageList(currentPost, imageList)
+            currentPost?.let { postToUpdate ->
+                postToUpdate.imgList.addAll(selectedUris)
+                postAdapter.notifyDataSetChanged()
             }
-            postAdapter.notifyDataSetChanged()
         }
     }
+
 
 
     override fun onDestroyView() {

@@ -55,6 +55,17 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/travelName" />
 
+    <Button
+        android:id="@+id/add_photo"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="+"
+        android:layout_gravity="center"
+        app:layout_constraintStart_toStartOf="@+id/travelName"
+        app:layout_constraintTop_toBottomOf="@+id/contactListView"
+        app:layout_constraintEnd_toEndOf="@+id/location" />
+
+
 
     <HorizontalScrollView
         android:id="@+id/imageListView"
@@ -76,12 +87,6 @@
             android:orientation="horizontal"
             android:fontFamily="@font/nanumsquareround_otfeb"
             android:textSize="16sp">
-            <Button
-                android:id="@+id/add_photo"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="+"
-                android:layout_gravity="center"/>
         </LinearLayout>
     </HorizontalScrollView>
 

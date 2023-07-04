@@ -1,15 +1,13 @@
 package com.example.myapplication.ui.calendar
 
-import android.app.Activity
-import android.content.ActivityNotFoundException
 import android.content.Context
-import android.content.Intent
-import android.media.Image
+import android.graphics.Bitmap
+import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.text.SpannableStringBuilder
+import android.util.Log
 import android.view.KeyEvent
 import android.view.LayoutInflater
-import android.view.ScrollCaptureCallback
 import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
@@ -19,19 +17,40 @@ import android.widget.EditText
 import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.LinearLayout
-import android.widget.ScrollView
 import android.widget.TextView
-import androidx.core.app.ActivityCompat.startActivityForResult
-import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
+import android.widget.Toast
 import com.example.myapplication.R
-import org.w3c.dom.Text
+import com.bumptech.glide.Glide
+import com.bumptech.glide.load.DataSource
+import com.bumptech.glide.load.engine.GlideException
+import com.bumptech.glide.request.RequestListener
+import android.graphics.BitmapFactory
+import android.os.AsyncTask
+import java.io.InputStream
+
+class LoadImageTask(private val imageView: ImageView) : AsyncTask<Uri, Void, Bitmap?>() {
+    override fun doInBackground(vararg uris: Uri): Bitmap? {
+        var inputStream: InputStream? = null
+        try {
+            inputStream = imageView.context.contentResolver.openInputStream(uris[0])
+            return BitmapFactory.decodeStream(inputStream)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        } finally {
+            inputStream?.close()
+        }
+        return null
+    }
+
+    override fun onPostExecute(bitmap: Bitmap?) {
+        imageView.setImageBitmap(bitmap)
+    }
+}
 
 class PostAdapter(private val context: Context, private var posts: MutableList<Post>) : BaseAdapter() {
     private var onItemRemoved: ((Post) -> Unit)? = null
     private var onTextEditListener : ((Post, TextView) -> Unit)? = null
     private var onAddPhotoListener : ((Post) -> Unit)? = null
-    private val REQUEST_CODE_GALLERY = 1001
 
     fun setOnItemRemovedListener(listener: (Post) -> Unit) {
         onItemRemoved = listener
@@ -98,24 +117,28 @@ class PostAdapter(private val context: Context, private var posts: MutableList<P
         date.text = SpannableStringBuilder(post.date); date.tag = "date"
         note.text = post.note; note.tag = "note"
 
-        /////////////////////images////////////////////////
+        val imageCount = post.imgList.size
+        Toast.makeText(context, "Image Count: $imageCount", Toast.LENGTH_SHORT).show()
+
+        imageList.removeAllViews()
+
         for (uri in post.imgList) {
             val imageView = ImageView(context)
-            imageView.setImageURI(uri)
-
-            val layoutParams = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.WRAP_CONTENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
+            imageView.layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, 300
             )
-            imageView.layoutParams = layoutParams
-
+            imageView.adjustViewBounds = true
+            imageView.scaleType = ImageView.ScaleType.FIT_XY // or ImageView.ScaleType.CENTER_CROP
             imageList.addView(imageView)
+
+            LoadImageTask(imageView).execute(uri)
         }
+
+
 
         /////////////////////contacts////////////////////////
         for (contact in post.contactList) {
             val contactView = LayoutInflater.from(context).inflate(R.layout.contact_item, contactList, false) as LinearLayout
-//            val contactTextView = contactView.findViewById<TextView>(R.id.contactName) // 이름 안뜨게 변경
             val contactImageButton = contactView.findViewById<ImageButton>(R.id.contactImage)
 
             // TODO: show contact info
@@ -159,19 +182,11 @@ class PostAdapter(private val context: Context, private var posts: MutableList<P
     }
 
     private fun addPhoto(post: Post) {
-        val galleryIntent = Intent(Intent.ACTION_GET_CONTENT)
-        galleryIntent.type = "image/*"
-        galleryIntent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true)
-
-        try {
-//            startActivityForResult(context as Activity, galleryIntent, REQUEST_CODE_GALLERY, null)
-            val activity = context as Activity
-            activity.startActivityForResult(galleryIntent, REQUEST_CODE_GALLERY)
-            onAddPhotoListener ?.invoke(post)
-        } catch (e: ActivityNotFoundException) {
-            // Handle the case when no gallery app is available
-        }
+        onAddPhotoListener ?.invoke(post)
     }
+
+
+
     private fun enterEditMode(post: Post, textView: TextView) {
         textView.setOnClickListener(null)
         textView.isClickable = false
