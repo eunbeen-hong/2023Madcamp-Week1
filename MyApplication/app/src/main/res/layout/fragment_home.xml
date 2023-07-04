@@ -19,7 +19,7 @@
         android:clickable="true"
         android:visibility="gone"
         android:src="@drawable/ic_add"
-        android:layout_marginBottom="216dp"
+        android:layout_marginBottom="146dp"
         android:layout_marginRight="16dp"
         app:backgroundTint="@android:color/darker_gray" />
 
@@ -33,7 +33,7 @@
         android:clickable="true"
         android:visibility="gone"
         android:src="@drawable/ic_search"
-        android:layout_marginBottom="148dp"
+        android:layout_marginBottom="78dp"
         android:layout_marginRight="16dp"
         app:backgroundTint="@android:color/darker_gray" />
 
@@ -44,7 +44,7 @@
         android:layout_gravity="bottom|end"
         android:clickable="true"
         android:src="@drawable/ic_menu"
-        android:layout_marginBottom="80dp"
+        android:layout_marginBottom="10dp"
         android:layout_marginRight="16dp"
         app:backgroundTint="@android:color/darker_gray" />
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

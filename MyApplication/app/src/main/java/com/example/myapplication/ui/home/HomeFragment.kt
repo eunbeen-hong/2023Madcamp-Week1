@@ -7,7 +7,6 @@ import android.content.Intent
 import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Bundle
-import android.provider.MediaStore
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -17,7 +16,6 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.myapplication.R
 import com.example.myapplication.databinding.FragmentHomeBinding
-import com.example.myapplication.databinding.PersonDetailsDialogBinding
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import java.io.*
@@ -44,7 +42,6 @@ class HomeFragment : Fragment() {
     private lateinit var adapter: PersonAdapter
 
     private val IMAGE_PICK_CODE = 1000
-    private var bitmap: Bitmap? = null
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -138,11 +135,13 @@ class HomeFragment : Fragment() {
 
         class PersonViewHolder(private val view: View, private val onClick: (Person) -> Unit) :
             RecyclerView.ViewHolder(view) {
-            private val textView: TextView = view.findViewById(R.id.text)
+            private val textView1: TextView = view.findViewById(R.id.text)
+            private val textView2: TextView = view.findViewById(R.id.text2)
             private val imageView: ImageView = view.findViewById(R.id.profileImage)
 
             fun bind(person: Person) {
-                textView.text = "${person.name} : ${person.number}"
+                textView1.text = "${person.name}"
+                textView2.text = "${person.number}"
                 if (!person.imageUri.isNullOrEmpty()) {
                     try {
                         val imageUri = Uri.parse(person.imageUri)
@@ -150,6 +149,10 @@ class HomeFragment : Fragment() {
                     } catch (e: Exception) {
                         e.printStackTrace()
                     }
+                } else {
+                    // Set default image from drawable
+                    val drawableId = view.resources.getIdentifier("ic_name", "drawable", view.context.packageName)
+                    imageView.setImageResource(drawableId)
                 }
                 view.setOnClickListener { onClick(person) }
             }
@@ -220,6 +223,7 @@ class HomeFragment : Fragment() {
         builder.setTitle("세부 정보")
 
         val dialogView = LayoutInflater.from(context).inflate(R.layout.person_details_dialog, null)
+        val setToBasicButton = dialogView.findViewById<Button>(R.id.setToBasic)
         val profileImage = dialogView.findViewById<ImageView>(R.id.profileImage)
         builder.setView(dialogView)
         currentImageView = profileImage
@@ -266,6 +270,19 @@ class HomeFragment : Fragment() {
             dialog.dismiss()
             adapter.notifyDataSetChanged()
         }
+
+        setToBasicButton.setOnClickListener {
+            // Set the image view to the 'ic_name' drawable
+            val drawableId = resources.getIdentifier("ic_name", "drawable", requireContext().packageName)
+            profileImage.setImageResource(drawableId)
+            // You may also want to update the Person object and its imageUri property
+            currentPerson?.let { person ->
+                val updatedPerson = person.copy(imageUri = null) // Assuming 'ic_name' is the default image
+                updateContact(person, updatedPerson, adapter)
+            }
+            selectedImageUri = null // Updating selectedImageUri to null as 'ic_name' is now the default image
+        }
+
 
         // Add an OnClickListener for the 'editButton'
         editButton.setOnClickListener {
@@ -436,5 +453,4 @@ class HomeFragment : Fragment() {
         dialog.window?.setBackgroundDrawableResource(R.drawable.dialog_border) // 배경 설정
         dialog.show() // AlertDialog 보여주기
     }
-
 }
