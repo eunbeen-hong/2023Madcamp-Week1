@@ -29,6 +29,44 @@ data class Person(
     val imageUri: String?
 )
 
+data class PersonItem(
+    val imageUri: String?,
+    val name: String,
+    val number: String
+)
+
+class PersonItemAdapter(context: Context, private val items: List<PersonItem>) :
+    ArrayAdapter<PersonItem>(context, 0, items) {
+
+    override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
+        val view = convertView ?: LayoutInflater.from(context).inflate(R.layout.dialog_list_item, parent, false)
+
+        val item = items[position]
+
+        val imageView = view.findViewById<ImageView>(R.id.imageView22)
+        val textView = view.findViewById<TextView>(R.id.textView22)
+        val textView3 = view.findViewById<TextView>(R.id.textView33)
+
+        if (!item.imageUri.isNullOrEmpty()) {
+            try {
+                val imageUri = Uri.parse(item.imageUri)
+                imageView.setImageURI(imageUri)
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        } else {
+            // Set default image from drawable
+            val drawableId = context.resources.getIdentifier("ic_name", "drawable", context.packageName)
+            imageView.setImageResource(drawableId)
+        }
+
+        textView.text = item.name
+        textView3.text = item.number
+
+        return view
+    }
+}
+
 class HomeFragment : Fragment() {
 
     private var _binding: FragmentHomeBinding? = null
@@ -429,28 +467,47 @@ class HomeFragment : Fragment() {
 
     // 연락처 검색 결과
     private fun showSearchResultsDialog(searchResults: List<Person>) {
-        val builder = AlertDialog.Builder(requireContext())
-        builder.setTitle("검색 결과")
+        val context = context
+        if (context != null) {
+            val builder = AlertDialog.Builder(context)
+            builder.setTitle("검색 결과")
 
-        val names = searchResults.map { it.name }.toTypedArray()
+            // Inflate the custom layout
+            val view = LayoutInflater.from(context).inflate(R.layout.dialog_list, null)
+            val listView = view.findViewById<ListView>(R.id.listView22)
 
-        builder.setItems(names) { _, which ->
-            val selectedPerson = searchResults[which]
-            showDetailsDialog(selectedPerson)
-        }
+            // Create a list of PersonItem objects
+            val personItems = searchResults.map { PersonItem(it.imageUri, it.name, it.number) }
 
-        builder.setPositiveButton("닫기", null)
+            // Create an adapter
+            val adapter = PersonItemAdapter(context, personItems)
 
-        val dialog = builder.create()
+            // Set the adapter to the ListView
+            listView.adapter = adapter
 
-        dialog.setOnShowListener {
-            val positiveButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE)
-            positiveButton.setOnClickListener {
-                dialog.dismiss()
+            // Set the item click listener
+            listView.setOnItemClickListener { _, _, position, _ ->
+                val selectedPerson = searchResults[position]
+                showDetailsDialog(selectedPerson)
             }
-        }
 
-        dialog.window?.setBackgroundDrawableResource(R.drawable.dialog_border) // 배경 설정
-        dialog.show() // AlertDialog 보여주기
+            // Set the custom view to the dialog
+            builder.setView(view)
+
+            builder.setPositiveButton("닫기", null)
+
+            val dialog = builder.create()
+
+            dialog.setOnShowListener {
+                val positiveButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE)
+                positiveButton.setOnClickListener {
+                    dialog.dismiss()
+                }
+            }
+
+            dialog.window?.setBackgroundDrawableResource(R.drawable.dialog_border)
+            dialog.show()
+        }
     }
+
 }
