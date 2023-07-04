@@ -216,9 +216,6 @@ class HomeFragment : Fragment() {
         override fun getItemCount() = people.size
     }
 
-
-
-
     // 연락처 추가 함수
     private fun showAddContactDialog(fileName: String, adapter: PersonAdapter) {
         val builder = AlertDialog.Builder(requireContext())

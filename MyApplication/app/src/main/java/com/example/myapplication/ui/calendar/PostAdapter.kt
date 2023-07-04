@@ -122,7 +122,6 @@ class PostAdapter(private val context: Context, private var posts: MutableList<P
         note.text = post.note; note.tag = "note"
 
         val imageCount = post.imgList.size
-        Toast.makeText(context, "Image Count: $imageCount", Toast.LENGTH_SHORT).show()
         imageList.removeAllViews()
 
         /////////////////////delete post////////////////////////

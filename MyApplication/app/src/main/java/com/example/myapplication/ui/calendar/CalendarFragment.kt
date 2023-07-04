@@ -12,9 +12,12 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.EditText
+import android.widget.ImageButton
 import android.widget.ListView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.example.myapplication.R
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
@@ -23,10 +26,17 @@ import java.io.FileOutputStream
 import com.example.myapplication.databinding.FragmentFeedBinding
 import java.text.ParseException
 import java.text.SimpleDateFormat
-import java.util.Calendar
+import com.example.myapplication.ui.home.Person
+import com.example.myapplication.ui.home.HomeFragment.PersonAdapter
 
-data class Post(var title: String, var location: String, var date: String,
-                var imgList: MutableList<Uri>, var contactList: MutableList<String>, var note: String)
+data class Post(
+    var title: String,
+    var location: String,
+    var date: String,
+    var imgList: MutableList<Uri>,
+    var contactList: MutableList<String>,
+    var note: String
+)
 
 class CalendarFragment : Fragment() {
     private var _binding: FragmentFeedBinding? = null
@@ -40,30 +50,36 @@ class CalendarFragment : Fragment() {
     private lateinit var postList: MutableList<Post>
 
     override fun onCreateView(
-            inflater: LayoutInflater,
-            container: ViewGroup?,
-            savedInstanceState: Bundle?
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
     ): View {
         _binding = FragmentFeedBinding.inflate(inflater, container, false)
         val root: View = binding.root
 
         val postListView: ListView = binding.postListView
 
-        val fileName = "posts.json"
+        val fileName2 = "numbers.json" // 이전 Fragment에서 사용한 파일 이름을 동일하게 사용해야 합니다.
+        val people: MutableList<Person> = readFromFile(fileName2, object : TypeToken<MutableList<Person>>() {})
+
+        val peopleString = people.joinToString(separator = "\n") { person ->
+            "Name: ${person.name}, Number: ${person.number}, Email: ${person.email}, Instagram: ${person.instagram}, Github: ${person.github}"
+        }
+
         copyAssetsToFile(requireContext(), fileName)
 
-//        var today: String = getToday()
-        postList = readFromFile(fileName)
-        var sortedPosts: MutableList<Post> = getPostSorted(postList)
+        postList = readFromFile(fileName, object : TypeToken<MutableList<Post>>() {})
+        val sortedPosts: MutableList<Post> = getPostSorted(postList)
 
         postAdapter = PostAdapter(requireContext(), sortedPosts)
         postListView.adapter = postAdapter
         postListView.visibility = if (sortedPosts.isEmpty()) View.GONE else View.VISIBLE
 
-
         /////////////////////add post////////////////////////
         binding.newPost.setOnClickListener {
-            showNewPostDialog(fileName, postAdapter)
+            binding.newPost.setOnClickListener {
+                showNewPostDialog(fileName, postAdapter, people)
+            }
         }
 
         /////////////////////delete post////////////////////////
@@ -81,7 +97,6 @@ class CalendarFragment : Fragment() {
             postAdapter.updateData(postList)
         }
 
-        // FIXME
         /////////////////////add photo////////////////////////
         postAdapter.setOnAddPhotoListener { post ->
             currentPost = post
@@ -95,35 +110,16 @@ class CalendarFragment : Fragment() {
             }
         }
 
-
         return root
     }
 
-    private fun readFromFile(fileName: String): MutableList<Post> {
+    private fun <T> readFromFile(fileName: String, typeToken: TypeToken<MutableList<T>>): MutableList<T> {
         val file = File(requireContext().filesDir, fileName)
         val json = file.readText()
-        return gson.fromJson(json, object : TypeToken<MutableList<Post>>() {}.type)
+        return gson.fromJson(json, typeToken.type)
     }
 
-    private fun writeToFile(fileName: String, data: MutableList<Post>) {
-        val file = File(requireContext().filesDir, fileName)
-        val json = gson.toJson(data)
-        file.writeText(json)
-        printJsonFileData(fileName)
-    }
 
-    private fun getPostSorted(postList: MutableList<Post>): MutableList<Post> {
-        val sdf = SimpleDateFormat("MM/dd/yyyy")
-
-        return postList.sortedByDescending { post ->
-            try {
-                sdf.parse(post.date)
-            } catch (e: ParseException) {
-                Log.d("my_log", "date format error: $e")
-                null
-            }
-        }.toMutableList()
-    }
 
     private fun copyAssetsToFile(context: Context, fileName: String) {
         val file = File(context.filesDir, fileName)
@@ -139,12 +135,24 @@ class CalendarFragment : Fragment() {
         }
     }
 
-    private fun getToday(): String {
-        val calendar = Calendar.getInstance()
-        val dayOfMonth = calendar.get(Calendar.DAY_OF_MONTH)
-        val month = calendar.get(Calendar.MONTH)
-        val year = calendar.get(Calendar.YEAR)
-        return "${month + 1}/${dayOfMonth}/${year}"
+    private fun getPostSorted(postList: MutableList<Post>): MutableList<Post> {
+        val sdf = SimpleDateFormat("MM/dd/yyyy")
+
+        return postList.sortedByDescending { post ->
+            try {
+                sdf.parse(post.date)
+            } catch (e: ParseException) {
+                Log.d("my_log", "date format error: $e")
+                null
+            }
+        }.toMutableList()
+    }
+
+    private fun writeToFile(fileName: String, data: MutableList<Post>) {
+        val file = File(requireContext().filesDir, fileName)
+        val json = gson.toJson(data)
+        file.writeText(json)
+        printJsonFileData(fileName)
     }
 
     private fun printJsonFileData(fileName: String) {
@@ -177,7 +185,27 @@ class CalendarFragment : Fragment() {
         }
     }
 
-    private fun showNewPostDialog(fileName: String, postAdapter: PostAdapter) {
+    private fun showContactsDialog(people: MutableList<Person>, selectedPeople: MutableList<Person>) {
+        val builder = AlertDialog.Builder(requireContext())
+        val view = layoutInflater.inflate(R.layout.dialog_contacts, null)
+        val listView = view.findViewById<RecyclerView>(R.id.contacts_list)
+
+        val layoutManager = LinearLayoutManager(requireContext())
+        listView.layoutManager = layoutManager
+
+        val adapter = PersonAdapter(people) { person ->
+            selectedPeople.add(person)
+            Toast.makeText(requireContext(), "${person.name} selected", Toast.LENGTH_SHORT).show()
+        }
+        listView.adapter = adapter
+
+        builder.setView(view)
+        builder.setPositiveButton("선택 완료", null) // 추가
+        builder.create().show()
+    }
+
+
+    private fun showNewPostDialog(fileName: String, postAdapter: PostAdapter, people: MutableList<Person>) {
         val builder = AlertDialog.Builder(requireContext())
         builder.setTitle("make new post!")
 
@@ -188,6 +216,13 @@ class CalendarFragment : Fragment() {
         builder.setNegativeButton("cancel", null)
 
         val dialog = builder.create()
+
+        val selectedPeople = mutableListOf<Person>()
+
+        val addContactButton = view.findViewById<ImageButton>(R.id.contact_addbutton)
+        addContactButton.setOnClickListener {
+            showContactsDialog(people, selectedPeople)
+        }
 
         dialog.setOnShowListener {
             val positiveButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE)
@@ -205,8 +240,10 @@ class CalendarFragment : Fragment() {
                     it.ifBlank { "none" }
                 }
 
-                val newPost = Post(title, location, date, mutableListOf(), mutableListOf(), note)
-                postList = readFromFile(fileName)
+                val contacts = selectedPeople.map { it.number }
+
+                val newPost = Post(title, location, date, mutableListOf(), contacts.toMutableList(), note)
+                postList = readFromFile(fileName, object : TypeToken<MutableList<Post>>() {})
                 postList.add(newPost)
                 writeToFile(fileName, postList)
                 postAdapter.updateData(postList)
@@ -218,7 +255,6 @@ class CalendarFragment : Fragment() {
         dialog.window?.setBackgroundDrawableResource(R.drawable.dialog_border)
         dialog.show()
     }
-
 
     override fun onDestroyView() {
         super.onDestroyView()
