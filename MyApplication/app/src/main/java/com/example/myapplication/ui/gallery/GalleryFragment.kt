@@ -2,6 +2,7 @@ package com.example.myapplication.ui.gallery
 
 import android.app.Activity.RESULT_OK
 import android.app.AlertDialog
+import android.content.ContentUris
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
@@ -49,6 +50,7 @@ class GalleryFragment : Fragment() {
     // onDestroyView.
     private val binding get() = _binding!!
     private val gson = Gson()
+    private var currentAlbumIndex = -1 // 현재 그리드뷰로 보여지는 앨범이 albums에서 몇 번째 index인지를 나타낸다. (-1은 "전체 사진"을 가리킨다)
 
     override fun onCreateView(
             inflater: LayoutInflater,
@@ -114,32 +116,38 @@ class GalleryFragment : Fragment() {
 
         Glide.with(context).load(imagePath).into(imageView)
 
+        val albumFile = "albums.json"
+        copyAssetToFile(requireContext(), albumFile)
+        val albums = readFromFile(albumFile)
+        val albumNames: MutableList<String> = mutableListOf()
+        for (album in albums) {
+            albumNames.add(album.albumName)
+        }
+
         // 1. 창 닫기
         builderShow.setPositiveButton("닫기") {dialog, _ -> dialog.dismiss()}
 
-        // 2. 앨범으로 이동하기
-        builderShow.setNegativeButton("이동") {_, _ ->
+        // 2. 앨범으로 복사하기
+        builderShow.setNegativeButton("앨범") {_, _ ->
             val builderAlbum = AlertDialog.Builder(context) // 앨범 이동을 위한 새로운 창을 띄운다.
-            builderAlbum.setTitle("앨범 이동")
-
-            val albumFile = "albums.json"
-            copyAssetToFile(requireContext(), albumFile)
-            val albums = readFromFile(albumFile)
-            val albumNames: MutableList<String> = mutableListOf()
-            for (album in albums) {
-                albumNames.add(album.albumName)
-            }
+            builderAlbum.setTitle("앨범으로 복사")
 
             var selectedAlbumPosition by Delegates.notNull<Int>()
             builderAlbum.setSingleChoiceItems(albumNames.toTypedArray(), -1) {_, position -> // 항목을 고르면 앨범 이름을 기억한다.
                 selectedAlbumPosition = position
             }
-            builderAlbum.setPositiveButton("이동") {_, _ -> // 이동 버튼을 누르면 해당 사진을 해당 앨범에 추가한다.
+            builderAlbum.setPositiveButton("복사") {_, _ -> // 복사 버튼을 누르면 해당 사진을 해당 앨범에 추가한다.
                 val updatedImages: MutableList<String> = albums[selectedAlbumPosition].images as MutableList<String>
                 updatedImages.add(imagePath)
                 albums[selectedAlbumPosition].images = updatedImages
                 writeToFile(albumFile, albums)
-                Toast.makeText(context, "이동 완료", Toast.LENGTH_SHORT).show()
+                val selectedAlbumName = albumNames[selectedAlbumPosition]
+                Toast.makeText(context, "$selectedAlbumName 앨범으로 복사 완료", Toast.LENGTH_SHORT).show()
+
+                if (currentAlbumIndex == selectedAlbumPosition) { // 현재 그리드뷰로 나타난 앨범으로 복사한 경우 그리드뷰를 업데이트한다.
+                    uriArr.add(imagePath)
+                    adapter.notifyDataSetChanged()
+                }
             }
             builderAlbum.setNegativeButton("취소") {dialog, _ -> dialog.dismiss()}
             builderAlbum.create().show()
@@ -147,31 +155,51 @@ class GalleryFragment : Fragment() {
 
         // 3. 삭제하기
         builderShow.setNeutralButton("삭제") {_, _ ->
-            val builderDelete = AlertDialog.Builder(context) // 삭제 확인을 위한 새로운 창을 띄운다.
-            builderDelete.setTitle("삭제하기")
-            builderDelete.setMessage("정말로 해당 파일을 삭제하시겠습니까?")
+            if (currentAlbumIndex == -1) { // "전체 사진"인 상태에서 사진을 삭제하는 경우 실제 저장소에서도 사진을 삭제한다.
+                val builderDeleteAtStorage = AlertDialog.Builder(context) // 삭제 확인을 위한 새로운 창을 띄운다.
+                builderDeleteAtStorage.setTitle("저장소에서 삭제하기")
+                builderDeleteAtStorage.setMessage("정말로 해당 파일을 저장소에서 삭제하시겠습니까?")
 
-            builderDelete.setPositiveButton("삭제") {_, _ ->
-                if (deletePhoto(imagePath)) {       // 저장소에서 파일을 실제로 삭제한 후에
+                builderDeleteAtStorage.setPositiveButton("삭제") { _, _ ->
+                    if (deletePhoto(imagePath)) {       // 저장소에서 파일을 실제로 삭제한 후에
+                        uriArr.removeAt(position)       // 사진들의 주소 목록인 uriArr에서도 삭제해서
+                        adapter.notifyDataSetChanged()  // Adapter에도 삭제했음을 알린다. -> 그리드뷰에 곧바로 반영이 되어서 나타난다.
+                        Toast.makeText(context, "저장소에서 삭제 성공!", Toast.LENGTH_SHORT).show()
+                    } else {
+                        Toast.makeText(context, "삭제 실패?", Toast.LENGTH_SHORT).show()
+                    }
+                }
+                builderDeleteAtStorage.setNegativeButton("취소") {dialog, _ -> dialog.dismiss()}
+                builderDeleteAtStorage.create().show()
+            }
+            else { // 그리드뷰가 앨범인 상태에서 사진을 삭제하는 경우 앨범에서만 삭제한다. (저장소에서는 유지된다)
+                val albumName = albumNames[currentAlbumIndex]
+                val builderDeleteAtAlbum = AlertDialog.Builder(context) // 삭제 확인을 위한 새로운 창을 띄운다.
+                builderDeleteAtAlbum.setTitle("앨범 $albumName" + "에서 삭제하기")
+                builderDeleteAtAlbum.setMessage("정말로 해당 파일을 $albumName 앨범에서 삭제하시겠습니까?")
+
+                builderDeleteAtAlbum.setPositiveButton("삭제") { _, _ ->
+                    val updatedImages: MutableList<String> = albums[currentAlbumIndex].images as MutableList<String>
+                    updatedImages.remove(imagePath)
+                    albums[currentAlbumIndex].images = updatedImages
+                    writeToFile(albumFile, albums)  // 해당 사진을 현재 앨범 목록에서 제거한 후에
                     uriArr.removeAt(position)       // 사진들의 주소 목록인 uriArr에서도 삭제해서
                     adapter.notifyDataSetChanged()  // Adapter에도 삭제했음을 알린다. -> 그리드뷰에 곧바로 반영이 되어서 나타난다.
-                    Toast.makeText(context, "삭제 성공!", Toast.LENGTH_SHORT).show()
-                } else {
-                    Toast.makeText(context, "삭제 실패?", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, "앨범에서 삭제 성공!", Toast.LENGTH_SHORT).show()
                 }
+                builderDeleteAtAlbum.setNegativeButton("취소") {dialog, _ -> dialog.dismiss()}
+                builderDeleteAtAlbum.create().show()
             }
-            builderDelete.setNegativeButton("취소") {dialog, _ -> dialog.dismiss()}
-            builderDelete.create().show()
         }
         builderShow.create().show()
     }
 
     // 3. SD 저장소에서 사진 삭제하기
     private fun deletePhoto(imagePath: String): Boolean { // 삭제 버튼을 누르면 해당 사진을 저장소에서 삭제한다.
-        fun getImageId(imagePath: String): Long { // 보조 함수
+        fun getImageId(imagePath: String): Long? { // 보조 함수
             val uri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI
             val projection = arrayOf(MediaStore.Images.Media._ID)
-            val selection = "${MediaStore.Images.Media.DATA}=?"
+            val selection = MediaStore.Images.Media.DATA + "=?"
             val selectionArgs = arrayOf(imagePath)
             val cursor = requireContext().contentResolver.query(uri, projection, selection, selectionArgs, null)
             val imageId = if (cursor != null && cursor.moveToFirst()) {
@@ -181,7 +209,7 @@ class GalleryFragment : Fragment() {
                 null
             }
             cursor?.close()
-            return imageId ?: -1
+            return imageId
         }
 
         val resolver = requireContext().contentResolver
@@ -191,12 +219,14 @@ class GalleryFragment : Fragment() {
             val deletedRows = resolver.delete(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, selection, selectionArgs)
             deletedRows > 0
         } else { // 안드로이드 높은 버전에서는 새로운 방식대로 한다.
-            val uri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI
-            val selection = "${MediaStore.Images.Media._ID}=?"
             val imageId = getImageId(imagePath) // imagePath로부터 이미지의 ID를 가져옴
-            val selectionArgs = arrayOf(imageId.toString())
-            val deletedRows = resolver.delete(uri, selection, selectionArgs)
-            deletedRows > 0
+            if (imageId != null && imageId > -1) {
+                val uri = ContentUris.withAppendedId(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, imageId)
+                val deletedRows = resolver.delete(uri, null, null)
+                deletedRows > 0
+            } else {
+                false
+            }
         }
     }
 
@@ -337,6 +367,7 @@ class GalleryFragment : Fragment() {
                         uriArr.addAll(selectedAlbumImages)
                         adapter.notifyDataSetChanged()
                         albumTitle.text = albumNames[selectedAlbumPosition] // 상단의 앨범 이름을 표시하는 TextView에도 반영
+                        currentAlbumIndex = selectedAlbumPosition-1
                         Toast.makeText(context, "앨범 선택 완료", Toast.LENGTH_SHORT).show()
                     }
 
@@ -356,13 +387,21 @@ class GalleryFragment : Fragment() {
                                 val builderDeleteAlbum = AlertDialog.Builder(requireContext())
                                 val deletedAlbumName = albumNames[selectedAlbumPosition]
                                 builderDeleteAlbum.setTitle("앨범 삭제")
-                                builderDeleteAlbum.setMessage("정말로 $deletedAlbumName 앨범을 삭제하겠습니까?")
+                                builderDeleteAlbum.setMessage("정말로 $deletedAlbumName 앨범을 삭제하시겠습니까?")
 
                                 builderDeleteAlbum.setPositiveButton("삭제") { _, _ ->
                                     albums.removeAt(selectedAlbumPosition - 1)
                                     writeToFile(albumFile, albums)
                                     Toast.makeText(context, "$deletedAlbumName 앨범 삭제 완료", Toast.LENGTH_SHORT).show()
                                     dialog.dismiss()
+                                    
+                                    if (albumTitle.text == albumNames[selectedAlbumPosition]) { // 현재 그리드뷰에서 보여지고 있는 앨범을 삭제한 경우
+                                        uriArr.clear()                                          // 그리드뷰를 "전체 사진"으로 전환한다.
+                                        uriArr.addAll(getAllPhotos())
+                                        adapter.notifyDataSetChanged()
+                                        albumTitle.text = "전체 사진" // 상단의 앨범 이름을 표시하는 TextView에도 반영
+                                        currentAlbumIndex = -1
+                                    }
                                 }
                                 builderDeleteAlbum.setNegativeButton("취소") {dialog, _ ->
                                     dialog.dismiss()
@@ -543,10 +582,11 @@ class GalleryFragment : Fragment() {
 * - 앨범에 따른 정렬 기능
 * - 앨범 이름 변경 기능
 * - 앨범 삭제 기능
+* - 사진 삭제 기능 (전체 사진에서 삭제할 경우 저장소에서도 삭제되지만, 앨범에서 삭제할 경우 앨범에서만 삭제된다)
 *
 * <해야 할 일>
 * - 카메라 촬영 후 저장소에 저장 구현
-* - 사진을 삭제할 때 앨범에도 반영하기
+*
 * 
 * <새로운 기능>
 * - 위치 기능
