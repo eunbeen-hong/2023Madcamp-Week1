@@ -1,15 +1,14 @@
 package com.example.myapplication.ui.calendar
 
 import android.app.Activity
+import android.app.AlertDialog
 import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
-import android.media.Image
 import android.net.Uri
 import android.text.SpannableStringBuilder
 import android.view.KeyEvent
 import android.view.LayoutInflater
-import android.view.ScrollCaptureCallback
 import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
@@ -19,22 +18,23 @@ import android.widget.EditText
 import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.LinearLayout
-import android.widget.ScrollView
 import android.widget.TextView
-import androidx.core.app.ActivityCompat.startActivityForResult
-import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import com.example.myapplication.R
-import org.w3c.dom.Text
 
 class PostAdapter(private val context: Context, private var posts: MutableList<Post>) : BaseAdapter() {
     private var onItemRemoved: ((Post) -> Unit)? = null
     private var onTextEditListener : ((Post, TextView) -> Unit)? = null
+    private var onEditListener : ((MutableList<Post>) -> Unit)? = null
     private var onAddPhotoListener : ((Post) -> Unit)? = null
+    private var onDeletePostListener : ((Post) -> Unit)? = null
     private val REQUEST_CODE_GALLERY = 1001
 
-    fun setOnItemRemovedListener(listener: (Post) -> Unit) {
-        onItemRemoved = listener
+    fun setOnDeletePostListener(listener: (Post) -> Unit) {
+        onDeletePostListener = listener
+    }
+
+    fun setOnEditListener (listener: (MutableList<Post>) -> Unit) {
+        onEditListener = listener
     }
 
     fun setOnTextEditListener (listener: (Post, TextView) -> Unit) {
@@ -92,12 +92,26 @@ class PostAdapter(private val context: Context, private var posts: MutableList<P
         val contactList: LinearLayout = view.findViewById(R.id.contactList)
         val note: TextView = view.findViewById(R.id.note)
         val addPhotoButton: Button = view.findViewById(R.id.add_photo)
+        val deleteButton: ImageButton = view.findViewById(R.id.deleteButton)
+        val editButton: ImageButton = view.findViewById(R.id.editButton)
 
-        travelName.text = post.tripName; travelName.tag = "tripName"
+        travelName.text = post.title; travelName.tag = "title"
         location.text = post.location; location.tag = "location"
         date.text = SpannableStringBuilder(post.date); date.tag = "date"
         note.text = post.note; note.tag = "note"
 
+
+        /////////////////////delete post////////////////////////
+        deleteButton.setOnClickListener {
+            confirmDelete(post)
+        }
+
+        /////////////////////edit post////////////////////////
+        editButton.setOnClickListener {
+            showEditDialog(posts, position)
+        }
+
+        // FIXME
         /////////////////////images////////////////////////
         for (uri in post.imgList) {
             val imageView = ImageView(context)
@@ -112,6 +126,7 @@ class PostAdapter(private val context: Context, private var posts: MutableList<P
             imageList.addView(imageView)
         }
 
+        // FIXME
         /////////////////////contacts////////////////////////
         for (contact in post.contactList) {
             val contactView = LayoutInflater.from(context).inflate(R.layout.contact_item, contactList, false) as LinearLayout
@@ -136,20 +151,7 @@ class PostAdapter(private val context: Context, private var posts: MutableList<P
             }
         }
 
-        /////////////////////edit////////////////////////
-        travelName.setOnClickListener {
-            enterEditMode(post, travelName)
-        }
-        location.setOnClickListener {
-            enterEditMode(post, location)
-        }
-        date.setOnClickListener {
-            enterEditMode(post, date)
-        }
-        note.setOnClickListener {
-            enterEditMode(post, note)
-        }
-
+        // FIXME
         /////////////////////add photo////////////////////////
         addPhotoButton.setOnClickListener {
             addPhoto(post)
@@ -158,6 +160,59 @@ class PostAdapter(private val context: Context, private var posts: MutableList<P
         return view
     }
 
+    private fun showEditDialog(posts: MutableList<Post>, position: Int) {
+        val builder = AlertDialog.Builder(context)
+        builder.setTitle("Edit Post")
+
+        val view = LayoutInflater.from(context).inflate(R.layout.dialog_edit_post, null)
+        builder.setView(view)
+
+        builder.setPositiveButton("confirm", null)
+        builder.setNegativeButton("cancel", null)
+
+        view.findViewById<EditText>(R.id.edit_title).setText(posts[position].title)
+        view.findViewById<EditText>(R.id.edit_date).setText(posts[position].date)
+        view.findViewById<EditText>(R.id.edit_location).setText(posts[position].location)
+        view.findViewById<EditText>(R.id.edit_note).setText(posts[position].note)
+
+        val dialog = builder.create()
+
+        dialog.setOnShowListener {
+            val positiveButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE)
+            positiveButton.setOnClickListener {
+                val title = view.findViewById<EditText>(R.id.edit_title).text.toString()
+                val date = view.findViewById<EditText>(R.id.edit_date).text.toString()
+                val location = view.findViewById<EditText>(R.id.edit_location).text.toString()
+                val note = view.findViewById<EditText>(R.id.edit_note).text.toString()
+
+                val editedPost = Post(title, location, date, mutableListOf(), mutableListOf(), note)
+
+                posts[position] = editedPost
+
+                onEditListener ?.invoke(posts)
+
+                dialog.dismiss()
+            }
+        }
+
+        dialog.window?.setBackgroundDrawableResource(R.drawable.dialog_border)
+        dialog.show()
+    }
+
+    private fun confirmDelete(post: Post) {
+        val builderShow = AlertDialog.Builder(context)
+        builderShow.setTitle("삭제 확인")
+        builderShow.setMessage("정말로 해당 포스트를 삭제하시겠습니까?")
+        builderShow.setPositiveButton("삭제") {_, _ ->
+            onDeletePostListener ?.invoke(post)
+        }
+        builderShow.setNegativeButton("취소") {dialog, _ ->
+            dialog.dismiss()
+        }
+        builderShow.create().show()
+    }
+
+    // FIXME
     private fun addPhoto(post: Post) {
         val galleryIntent = Intent(Intent.ACTION_GET_CONTENT)
         galleryIntent.type = "image/*"
@@ -172,40 +227,5 @@ class PostAdapter(private val context: Context, private var posts: MutableList<P
             // Handle the case when no gallery app is available
         }
     }
-    private fun enterEditMode(post: Post, textView: TextView) {
-        textView.setOnClickListener(null)
-        textView.isClickable = false
-        textView.isFocusable = true
-        textView.isFocusableInTouchMode = true
-        textView.requestFocus()
-        textView.setOnEditorActionListener { textView, actionId, event ->
-            if (actionId == EditorInfo.IME_ACTION_DONE || (event != null && event.keyCode == KeyEvent.KEYCODE_ENTER && event.action == KeyEvent.ACTION_DOWN)) {
-                exitEditMode(post, textView)
-                true
-            } else {
-                false
-            }
-        }
-    }
 
-    private fun exitEditMode(post: Post, textView: TextView) {
-        textView.setOnClickListener {
-            enterEditMode(post, textView)
-        }
-        textView.isClickable = true
-        textView.isFocusable = false
-        textView.isFocusableInTouchMode = false
-
-        val newText = textView.text.toString()
-        val position = posts.indexOf(post)
-        if (position != -1) {
-            when (textView.tag) {
-                "tripName" -> posts[position].tripName = newText
-                "location" -> posts[position].location = newText
-                "date" -> posts[position].date = newText
-                "note" -> posts[position].note = newText
-            }
-            onTextEditListener ?.invoke(post, textView)
-        }
-    }
 }
