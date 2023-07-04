@@ -4,6 +4,7 @@ import android.app.Activity
 import android.app.AlertDialog
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Bundle
@@ -117,8 +118,6 @@ class HomeFragment : Fragment() {
                 binding.searchContact.visibility = View.VISIBLE
             }
         }
-
-
         return root
     }
 
@@ -321,6 +320,44 @@ class HomeFragment : Fragment() {
             selectedImageUri = null // Updating selectedImageUri to null as 'ic_name' is now the default image
         }
 
+
+        instagramTextView.setOnClickListener {
+            val username = person.instagram
+            val uri = Uri.parse("https://instagram.com/_u/$username")
+            val instagram = Intent(Intent.ACTION_VIEW, uri)
+
+            instagram.setPackage("com.instagram.android")
+
+            val packageManager = requireContext().packageManager
+            val activities = packageManager.queryIntentActivities(instagram, 0)
+
+            if (activities.isNotEmpty()) {
+                startActivity(instagram)
+            } else {
+                // Instagram 앱이 없을 경우 웹 사이트로 이동
+                val webIntent = Intent(Intent.ACTION_VIEW, uri)
+                startActivity(webIntent)
+            }
+        }
+
+        githubTextView.setOnClickListener {
+            val username = person.github
+            val uri = Uri.parse("https://github.com/$username")
+            val github = Intent(Intent.ACTION_VIEW, uri)
+
+            try {
+                startActivity(github)
+            } catch (e: Exception) {
+                // URL로 연결할 수 없을 경우의 예외 처리
+                e.printStackTrace()
+            }
+        }
+
+        numberTextView.setOnClickListener {
+            val phoneNumber = numberTextView.text.toString()
+            val dialIntent = Intent(Intent.ACTION_DIAL, Uri.parse("tel:$phoneNumber"))
+            startActivity(dialIntent)
+        }
 
         // Add an OnClickListener for the 'editButton'
         editButton.setOnClickListener {

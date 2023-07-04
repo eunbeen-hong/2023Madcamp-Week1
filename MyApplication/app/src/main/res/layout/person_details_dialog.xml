@@ -82,7 +82,9 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:textAppearance="?android:textAppearanceMedium"
-            android:paddingStart="8dp" />
+            android:paddingStart="8dp"
+            android:clickable="true"
+            android:focusable="true" />
     </LinearLayout>
 
     <LinearLayout
@@ -126,7 +128,9 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:textAppearance="?android:textAppearanceMedium"
-            android:paddingStart="8dp" />
+            android:paddingStart="8dp"
+            android:clickable="true"
+            android:focusable="true" />
     </LinearLayout>
 
     <LinearLayout
@@ -148,7 +152,9 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:textAppearance="?android:textAppearanceMedium"
-            android:paddingStart="8dp" />
+            android:paddingStart="8dp"
+            android:clickable="true"
+            android:focusable="true" />
     </LinearLayout>
 
     <LinearLayout
