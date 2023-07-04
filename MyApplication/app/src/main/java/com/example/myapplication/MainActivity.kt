@@ -37,6 +37,9 @@ class MainActivity : AppCompatActivity() {
         navView.setupWithNavController(navController)
 
         checkPermission() // 파일 접근 권한과 카메라 접근 권한을 확인하자
+
+        // TODO: tab 3개 floating button 위치 맞추고 아이콘 수정
+        // TODO: calendar fragment 이름 변경
     }
 
     // 핸드폰 권한 요청
@@ -75,4 +78,5 @@ class MainActivity : AppCompatActivity() {
             checkPermission()
         }
     }
+
 }
