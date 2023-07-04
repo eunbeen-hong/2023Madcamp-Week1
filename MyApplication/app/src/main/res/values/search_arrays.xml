@@ -1,0 +1,7 @@
+<resources>
+    <!-- ... -->
+    <string-array name="search_by_options">
+        <item>Name</item>
+        <item>Number</item>
+    </string-array>
+</resources>
