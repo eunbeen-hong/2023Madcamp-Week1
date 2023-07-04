@@ -8,7 +8,10 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
+import android.widget.ArrayAdapter
+import android.widget.Button
 import android.widget.EditText
+import android.widget.ListView
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -16,8 +19,10 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.myapplication.databinding.FragmentCalendarBinding
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import kotlinx.coroutines.selects.select
 import java.io.File
 import java.io.FileOutputStream
+import com.example.myapplication.R
 import java.util.Calendar
 import kotlin.math.log
 
@@ -34,81 +39,66 @@ class CalendarFragment : Fragment() {
             container: ViewGroup?,
             savedInstanceState: Bundle?
     ): View {
-
         _binding = FragmentCalendarBinding.inflate(inflater, container, false)
         val root: View = binding.root
-        val taskListView: RecyclerView = binding.tasksList
-        taskListView.layoutManager = LinearLayoutManager(requireContext())
+        val taskListView: ListView = binding.tasksList
+        val newTextTask: EditText = binding.newTask
+
         val fileName = "tasks.json"
         copyAssetsToFile(requireContext(), fileName)
 
-        var userCollection: MutableList<Collection> = readFromFile(fileName)
         var selectedDate: String = getToday()
+        var userCollection: MutableList<Collection> = readFromFile(fileName)
         var sortedTasks: MutableList<Task> = getDailyTasksSorted(userCollection, selectedDate)
-        var taskAdapter = TaskAdapter(sortedTasks, requireActivity())
+
+        val taskAdapter = TaskAdapter(sortedTasks, requireActivity())
         taskListView.adapter = taskAdapter
-        taskAdapter.setOnItemRemovedListener { removedTask ->
-            val action = {
-                val selectedCollection = userCollection.find { it.date == selectedDate }
-                selectedCollection?.let { collection ->
-                    val index = collection.tasks.indexOf(removedTask)
-                    if (index != -1) {
-                        collection.tasks.removeAt(index)
-                        if (collection.tasks.isEmpty()) {
-                            userCollection.remove(collection)
-                        }
-                        Log.d("JSON File", "setOnItemRemovedListener")
-                        writeToFile(fileName, userCollection)
-                        sortedTasks = getDailyTasksSorted(userCollection, selectedDate)
-                        taskAdapter.updateData(sortedTasks)
-                        taskAdapter.notifyDataSetChanged()
-                    }
-                }
-            }
-            retryOperation(action, 5, 1000)
-        }
-        taskAdapter.setOnCheckedChangeListener { task, isChecked ->
-            val action = {
-                task.completed = isChecked
-                Log.d("JSON File", "setOnCheckedChangeListener")
-                writeToFile(fileName, userCollection)
-                sortedTasks = getDailyTasksSorted(userCollection, selectedDate)
-                taskAdapter.updateData(sortedTasks)
-            }
-            retryOperation(action, 5, 1000)
-        }
-
-        initializeItemTouchHelper(taskAdapter)
-
-
         taskListView.visibility = if (sortedTasks.isEmpty()) View.GONE else View.VISIBLE
 
         binding.selectedDate.text = selectedDate
 
-        binding.calendar.setOnDateChangeListener { _, year, month, dayOfMonth ->
-            val action = {
-                selectedDate = "${month + 1}/${dayOfMonth}/${year}"
-                binding.selectedDate.text = selectedDate
 
-                sortedTasks = getDailyTasksSorted(userCollection, selectedDate)
-                taskAdapter.updateData(sortedTasks)
-                taskAdapter.notifyDataSetChanged()
-                Log.d("JSON File", "setOnDateChangeListener")
-                Log.d("JSON File", "sortedTasks; $sortedTasks")
-                writeToFile(fileName, userCollection)
-
-                taskListView.visibility =
-                    if (sortedTasks.isEmpty()) View.GONE else View.VISIBLE // TODO: sortedTasks 말고 내부 확인?
-
-            }
-
-            retryOperation(action, 5, 1000)
+        /////////////////////////change complete status/////////////////////////
+        taskAdapter.setOnCheckedChangeListener { task, isChecked ->
+            task.completed = isChecked
+            writeToFile(fileName, userCollection)
+            sortedTasks = getDailyTasksSorted(userCollection, selectedDate)
+            taskAdapter.updateData(sortedTasks)
         }
 
-        ///////////////////////add new task/////////////////////////
 
-        val newTextTask: EditText = binding.newTask
+        /////////////////////////remove task/////////////////////////
+        taskAdapter.setOnItemRemovedListener { removedTask ->
+            val selectedCollection = userCollection.find {it.date == selectedDate}
+            selectedCollection?.let {collection ->
+                val index = collection.tasks.indexOf(removedTask)
+                if (index != -1)
+                {
+                    collection.tasks.removeAt(index)
+                    if(collection.tasks.isEmpty()) {
+                        userCollection.remove(collection)
+                    }
+                    writeToFile(fileName, userCollection)
+                    sortedTasks = getDailyTasksSorted(userCollection, selectedDate)
+                    taskAdapter.updateData(sortedTasks)
+                }
+            }
+        }
 
+
+        /////////////////////////select date/////////////////////////
+        binding.calendar.setOnDateChangeListener { _, year, month, dayOfMonth ->
+            selectedDate = "${month + 1}/${dayOfMonth}/${year}"
+            binding.selectedDate.text = selectedDate
+
+            sortedTasks = getDailyTasksSorted(userCollection, selectedDate)
+            taskAdapter.updateData(sortedTasks)
+            taskAdapter.notifyDataSetChanged()
+            taskListView.visibility =
+                if (sortedTasks.isEmpty()) View.GONE else View.VISIBLE
+        }
+
+        /////////////////////////add new task/////////////////////////
         newTextTask.setOnEditorActionListener { _, actionId, event ->
 
             if (actionId == EditorInfo.IME_ACTION_DONE || (event != null && event.keyCode == KeyEvent.KEYCODE_ENTER && event.action == KeyEvent.ACTION_DOWN)) {
@@ -129,12 +119,11 @@ class CalendarFragment : Fragment() {
                         userCollection.add(newCollection)
                     }
 
-                    Log.d("JSON File", "setOnEditorActionListener")
                     writeToFile(fileName, userCollection)
 
                     sortedTasks = getDailyTasksSorted(userCollection, selectedDate)
                     taskAdapter.updateData(sortedTasks)
-                    taskAdapter.notifyDataSetChanged()
+//                    taskAdapter.notifyDataSetChanged()
 
                     taskListView.visibility =
                         if (sortedTasks.isEmpty()) View.GONE else View.VISIBLE // TODO: sortedTasks 말고 내부 확인?
@@ -144,18 +133,12 @@ class CalendarFragment : Fragment() {
                 newTextTask.text.clear()
                 true
             } else {
-                Log.v("JSON File", "here?")
-                false
+//                false // false: 재입력시 입력칸 다시 클릭
+                true
             }
         }
 
         return root
-    }
-
-    private fun initializeItemTouchHelper(taskAdapter: TaskAdapter) {
-        val itemTouchHelperCallback = ItemTouchHelperCallback(taskAdapter)
-        val itemTouchHelper = ItemTouchHelper(itemTouchHelperCallback)
-        itemTouchHelper.attachToRecyclerView(binding.tasksList)
     }
 
     private fun readFromFile(fileName: String): MutableList<Collection> {
@@ -165,20 +148,10 @@ class CalendarFragment : Fragment() {
     }
 
     private fun writeToFile(fileName: String, data: MutableList<Collection>) {
-        val action: () -> Unit = {
-            val file = File(requireContext().filesDir, fileName)
-            val json = gson.toJson(data)
-            file.writeText(json)
-            printJsonFileData(fileName)
-        }
-
-        retryOperation(
-            action = {
-                action
-            },
-            maxRetries = 5,
-            delayMillis = 1000
-        )
+        val file = File(requireContext().filesDir, fileName)
+        val json = gson.toJson(data)
+        file.writeText(json)
+        printJsonFileData(fileName)
     }
 
     private fun getDailyTasksSorted(userCollection: MutableList<Collection>, date: String): MutableList<Task> {

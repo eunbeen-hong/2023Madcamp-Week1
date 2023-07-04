@@ -5,164 +5,108 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.Drawable
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ActionMenuView
+import android.widget.BaseAdapter
+import android.widget.Button
 import android.widget.CheckBox
+import android.widget.ImageButton
 import android.widget.TextView
 import android.widget.Toast
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView
 import com.example.myapplication.R
 import com.google.gson.Gson
+import org.w3c.dom.Text
 import java.io.File
 
-class TaskAdapter(private var tasks: MutableList<Task>, private val activity: Activity) : RecyclerView.Adapter<TaskAdapter.TaskViewHolder>(), ItemTouchHelperAdapter {
-    private val removedItems = mutableListOf<Task>()
+class TaskAdapter(private var tasks: MutableList<Task>, private val activity: Activity) : BaseAdapter() {
     private var onItemRemoved: ((Task) -> Unit)? = null
-    private var onCheckedChangeListener: ((Task, Boolean) -> Unit)? = null
+    private var onCheckedChangeListener : ((Task, Boolean) -> Unit)? = null
 
     fun setOnItemRemovedListener(listener: (Task) -> Unit) {
         onItemRemoved = listener
     }
 
-    fun setOnCheckedChangeListener(listener: (Task, Boolean) -> Unit) {
-        onCheckedChangeListener = listener
+    fun setOnCheckedChangeListener (listener: (Task, Boolean) -> Unit) {
+        onCheckedChangeListener  = listener
     }
 
     fun updateData(newTasks: MutableList<Task>) {
-        tasks = newTasks
+        tasks.clear()
+        tasks.addAll(newTasks)
         notifyDataSetChanged()
     }
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): TaskViewHolder {
-        val itemView = LayoutInflater.from(parent.context).inflate(R.layout.task_item, parent, false)
-        return TaskViewHolder(itemView)
-    }
 
-    override fun onBindViewHolder(holder: TaskViewHolder, position: Int) {
-        val task = tasks[position]
-        holder.bind(task)
-    }
-
-    override fun getItemCount(): Int {
+    override fun getCount(): Int {
         return tasks.size
     }
 
-    fun removeItem(removedTask: Task) {
+    override fun getItem(position: Int): Any {
+        return tasks[position]
+    }
+
+    override fun getItemId(position: Int): Long {
+        return position.toLong()
+    }
+
+    private fun removeItem(removedTask: Task) {
         val position = tasks.indexOf(removedTask)
-        // TODO
-//        if (position >= itemCount) return tasks
-//        val item = tasks[position]
-//        removedItems.add(item)
-//        val actualList = tasks.filterNot { removedItems.contains(it) }
-//        tasks.clear()
-//        tasks.addAll(actualList)
-//        notifyDataSetChanged()
-//        return actualList.toMutableList()
         if (position != -1) {
             tasks.removeAt(position)
             onItemRemoved?.invoke(removedTask)
-            notifyItemRemoved(position)
+            notifyDataSetChanged()
         }
     }
 
-    override fun onItemMove(fromPosition: Int, toPosition: Int): Boolean {
-        return false
-    }
+    override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
+        var view = convertView ?: LayoutInflater.from(parent.context).inflate(R.layout.task_item, parent, false)
+        val task = tasks[position]
 
-    override fun onItemDismiss(position: Int) {
-        val removedTask = tasks[position]
-        tasks.removeAt(position)
-        onItemRemoved?.invoke(removedTask)
-        notifyItemRemoved(position)
-    }
+        val checkButton: ImageButton = view.findViewById(R.id.checkButton)
+        val taskText: TextView = view.findViewById(R.id.taskText)
+        val deleteButton: ImageButton = view.findViewById(R.id.deleteButton)
 
-    inner class TaskViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        private val taskCheckboxView: CheckBox = itemView.findViewById((R.id.checkItem))
 
-        init {
-            val swipeCallback = object :
-                ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT or ItemTouchHelper.RIGHT) {
-                override fun onMove(
-                    recyclerView: RecyclerView,
-                    viewHolder: RecyclerView.ViewHolder,
-                    target: RecyclerView.ViewHolder
-                ): Boolean {
-                    return false
-                }
+        taskText.text = task.name
+        taskText.tag = position
 
-                override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
-                    Toast.makeText(itemView.context, "Removed!", Toast.LENGTH_SHORT).show()
-                    val position = viewHolder.adapterPosition
-                    val task = tasks[position]
-                    removeItem(task)
-                }
+        if (task.completed) {
+            checkButton.setImageResource(R.drawable.check_true)
+        } else {
+            checkButton.setImageResource(R.drawable.check_false)
+        }
 
-                override fun onChildDraw(
-                    c: Canvas,
-                    recyclerView: RecyclerView,
-                    viewHolder: RecyclerView.ViewHolder,
-                    dX: Float,
-                    dY: Float,
-                    actionState: Int,
-                    isCurrentlyActive: Boolean
-                ) {
-                    val itemView = viewHolder.itemView
-                    val itemHeight = itemView.bottom - itemView.top
-                    val background: Drawable = ColorDrawable(Color.RED)
-                    val inHeight = 24 // Replace 24 with the desired height of the icon
-                    val inWidth = 24 // Replace 24 with the desired width of the icon
 
-                    background.setBounds(
-                        itemView.right + dX.toInt(),
-                        itemView.top,
-                        itemView.right,
-                        itemView.bottom
-                    )
-                    background.draw(c)
+//        textCheckbox.setOnCheckedChangeListener { _, isChecked ->
+//            if (textCheckbox.tag == position) {
+//                Log.d("JSON File", "setOnClickListener (ta) $task")
+//                task.completed = isChecked
+//                onCheckedChangeListener?.invoke(task, isChecked)
+//            }
+//        }
 
-                    val iconTop = itemView.top + (itemHeight - inHeight) / 2
-                    val iconMargin = (itemHeight - inHeight) / 2
-                    val iconLeft = itemView.right - iconMargin - inWidth
-                    val iconRight = itemView.right - iconMargin
-                    val iconBottom = iconTop + inHeight
 
-                    val icon =
-                        itemView.context.getDrawable(R.drawable.ic_dashboard_black_24dp) // Replace `your_icon_resource` with the actual resource ID of your icon
-                    icon?.let {
-                        it.setBounds(iconLeft, iconTop, iconRight, iconBottom)
-                        it.draw(c)
-                    }
-
-                    super.onChildDraw(
-                        c,
-                        recyclerView,
-                        viewHolder,
-                        dX,
-                        dY,
-                        actionState,
-                        isCurrentlyActive
-                    )
-                }
+        checkButton.setOnClickListener{
+            Log.d("JSON File", "setOnClickListener (ta) $task")
+            task.completed = !task.completed
+            if (task.completed) {
+                checkButton.setImageResource(R.drawable.check_true)
+            } else {
+                checkButton.setImageResource(R.drawable.check_false)
             }
-
-            val itemTouchHelper = ItemTouchHelper(swipeCallback)
-            itemTouchHelper.attachToRecyclerView(itemView.findViewById(R.id.tasksList))
+            onCheckedChangeListener ?.invoke(task, task.completed)
         }
 
-        fun bind(task: Task) {
-            taskCheckboxView.text = task.name
-            taskCheckboxView.isChecked = task.completed
-
-            taskCheckboxView.setOnCheckedChangeListener { _, isChecked ->
-                task.completed = isChecked
-                activity.runOnUiThread {
-                    notifyItemChanged(adapterPosition)
-                }
-                onCheckedChangeListener?.invoke(task, isChecked)
-            }
+        deleteButton.setOnClickListener {
+            Log.d("JSON File", "setOnClickListener (ta)")
+            removeItem(task)
         }
+
+        return view
     }
 }

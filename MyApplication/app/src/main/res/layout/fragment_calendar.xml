@@ -36,12 +36,14 @@
             android:inputType="text"
             android:autofillHints="name" />
 
-        <androidx.recyclerview.widget.RecyclerView
+        <ListView
             android:id="@+id/tasksList"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_marginHorizontal="16dp"
-            android:background="@color/transparent_purple" />
+            android:background="@color/white"
+            android:divider="@color/transparent"
+            android:dividerHeight="16dp" />
 
     </LinearLayout>
 
