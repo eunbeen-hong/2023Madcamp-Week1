@@ -1,6 +1,6 @@
 [
   {
-    "tripName":  "my first trip to England",
+    "title":  "my first trip to England",
     "location":  "London",
     "date":  "06/29/2023",
     "imgList": [],
@@ -8,7 +8,7 @@
     "note": "I want to go see the London Eye!!"
   },
   {
-    "tripName":  "my second trip to England",
+    "title":  "my second trip to England",
     "location":  "London",
     "date":  "06/30/2023",
     "imgList": [],
@@ -16,7 +16,7 @@
     "note": "I want to try fish & chips!!"
   },
   {
-    "tripName":  "my third trip to England",
+    "title":  "my third trip to England",
     "location":  "London",
     "date":  "07/01/2023",
     "imgList": [],

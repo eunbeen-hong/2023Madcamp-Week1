@@ -2,6 +2,7 @@ package com.example.myapplication.ui.calendar
 
 import android.app.Activity
 import android.content.ActivityNotFoundException
+import android.app.AlertDialog
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -10,30 +11,22 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.AbsListView
-import android.widget.Button
+import android.widget.EditText
 import android.widget.ListView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
+import com.example.myapplication.R
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import java.io.File
 import java.io.FileOutputStream
 import com.example.myapplication.databinding.FragmentFeedBinding
-import com.google.android.material.floatingactionbutton.FloatingActionButton
 import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.Calendar
 
-data class Post(
-    var tripName: String,
-    var location: String,
-    var date: String,
-    var imgList: MutableList<Uri>, // Nullable 제거
-    var contactList: MutableList<String>,
-    var note: String
-)
-
+data class Post(var title: String, var location: String, var date: String,
+                var imgList: MutableList<Uri>, var contactList: MutableList<String>, var note: String)
 
 class CalendarFragment : Fragment() {
     private var _binding: FragmentFeedBinding? = null
@@ -44,6 +37,7 @@ class CalendarFragment : Fragment() {
     private val REQUEST_CODE_GALLERY = 1001
 
     private lateinit var postAdapter: PostAdapter
+    private lateinit var postList: MutableList<Post>
 
     override fun onCreateView(
             inflater: LayoutInflater,
@@ -54,16 +48,12 @@ class CalendarFragment : Fragment() {
         val root: View = binding.root
 
         val postListView: ListView = binding.postListView
-        val fab_newPost: FloatingActionButton = binding.newPost
 
         val fileName = "posts.json"
         copyAssetsToFile(requireContext(), fileName)
 
-        // TODO: addition (in fab)
-        // TODO: deletion (add delete button)
-
 //        var today: String = getToday()
-        var postList: MutableList<Post> = readFromFile(fileName)
+        postList = readFromFile(fileName)
         var sortedPosts: MutableList<Post> = getPostSorted(postList)
 
         postAdapter = PostAdapter(requireContext(), sortedPosts)
@@ -71,47 +61,27 @@ class CalendarFragment : Fragment() {
         postListView.visibility = if (sortedPosts.isEmpty()) View.GONE else View.VISIBLE
 
 
+        /////////////////////add post////////////////////////
+        binding.newPost.setOnClickListener {
+            showNewPostDialog(fileName, postAdapter)
+        }
+
+        /////////////////////delete post////////////////////////
+        postAdapter.setOnDeletePostListener { post ->
+            postList.remove(post)
+            writeToFile(fileName, postList)
+            postAdapter.updateData(postList)
+        }
+
         /////////////////////edit////////////////////////
-        postAdapter.setOnTextEditListener { post, textView ->
-            val newText = textView.text.toString()
-            val position = postList.indexOf(post)
-            if (position != -1) {
-                when (textView.tag) {
-                    "tripName" -> postList[position].tripName = newText
-                    "location" -> postList[position].location = newText
-                    "date" -> {
-                        postList[position].date = newText
-                        sortedPosts = getPostSorted(postList)
-                    }
-                    "note" -> postList[position].note = newText
-                }
-                writeToFile(fileName, postList)
-                postAdapter.updateData(sortedPosts)
-            }
+        postAdapter.setOnEditListener { posts ->
+            postList.clear()
+            postList.addAll(posts)
+            writeToFile(fileName, postList)
+            postAdapter.updateData(postList)
         }
 
-        var currentScrollPosition = 0
-
-        postListView.setOnScrollListener(object : AbsListView.OnScrollListener {
-            override fun onScrollStateChanged(view: AbsListView, scrollState: Int) {
-                // Handle scroll state changes if needed
-            }
-
-            override fun onScroll(view: AbsListView, firstVisibleItem: Int, visibleItemCount: Int, totalItemCount: Int) {
-                // Update the current scroll position
-                currentScrollPosition = postListView.firstVisiblePosition
-            }
-        })
-
-        postListView.setOnFocusChangeListener { _, hasFocus ->
-            if (hasFocus) {
-                postListView.post {
-                    postListView.setSelection(currentScrollPosition)  // Scroll to the current scroll position
-                }
-            }
-        }
-
-
+        // FIXME
         /////////////////////add photo////////////////////////
         postAdapter.setOnAddPhotoListener { post ->
             currentPost = post
@@ -145,15 +115,14 @@ class CalendarFragment : Fragment() {
     private fun getPostSorted(postList: MutableList<Post>): MutableList<Post> {
         val sdf = SimpleDateFormat("MM/dd/yyyy")
 
-        postList.sortBy { post ->
+        return postList.sortedByDescending { post ->
             try {
                 sdf.parse(post.date)
             } catch (e: ParseException) {
                 Log.d("my_log", "date format error: $e")
                 null
             }
-        }
-        return postList
+        }.toMutableList()
     }
 
     private fun copyAssetsToFile(context: Context, fileName: String) {
@@ -208,6 +177,47 @@ class CalendarFragment : Fragment() {
         }
     }
 
+    private fun showNewPostDialog(fileName: String, postAdapter: PostAdapter) {
+        val builder = AlertDialog.Builder(requireContext())
+        builder.setTitle("make new post!")
+
+        val view = layoutInflater.inflate(R.layout.dialog_new_post, null)
+        builder.setView(view)
+
+        builder.setPositiveButton("add", null)
+        builder.setNegativeButton("cancel", null)
+
+        val dialog = builder.create()
+
+        dialog.setOnShowListener {
+            val positiveButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE)
+            positiveButton.setOnClickListener {
+                val title = view.findViewById<EditText>(R.id.new_title).text.toString().let {
+                    it.ifBlank { "none" }
+                }
+                val date = view.findViewById<EditText>(R.id.new_date).text.toString().let {
+                    it.ifBlank { "none" }
+                }
+                val location = view.findViewById<EditText>(R.id.new_title).text.toString().let {
+                    it.ifBlank { "none" }
+                }
+                val note = view.findViewById<EditText>(R.id.new_note).text.toString().let {
+                    it.ifBlank { "none" }
+                }
+
+                val newPost = Post(title, location, date, mutableListOf(), mutableListOf(), note)
+                postList = readFromFile(fileName)
+                postList.add(newPost)
+                writeToFile(fileName, postList)
+                postAdapter.updateData(postList)
+
+                dialog.dismiss()
+            }
+        }
+
+        dialog.window?.setBackgroundDrawableResource(R.drawable.dialog_border)
+        dialog.show()
+    }
 
 
     override fun onDestroyView() {
