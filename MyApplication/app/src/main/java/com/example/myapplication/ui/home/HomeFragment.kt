@@ -19,6 +19,8 @@ import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import java.io.*
 
+
+// 개인 정보 data class
 data class Person(
     val name: String,
     val number: String,
@@ -28,12 +30,16 @@ data class Person(
     val imageUri: String?
 )
 
+
+// 검색 결과에 사용하는 data class
 data class PersonItem(
     val imageUri: String?,
     val name: String,
     val number: String
 )
 
+
+// 검색했을 때 나오는 Dialog 관리
 class PersonItemAdapter(context: Context, private val items: List<PersonItem>) :
     ArrayAdapter<PersonItem>(context, 0, items) {
 
@@ -44,7 +50,9 @@ class PersonItemAdapter(context: Context, private val items: List<PersonItem>) :
 
         val imageView = view.findViewById<ImageView>(R.id.imageView22)
         val textView = view.findViewById<TextView>(R.id.textView22)
+        textView.text = item.name
         val textView3 = view.findViewById<TextView>(R.id.textView33)
+        textView3.text = item.number
 
         if (!item.imageUri.isNullOrEmpty()) {
             try {
@@ -54,14 +62,10 @@ class PersonItemAdapter(context: Context, private val items: List<PersonItem>) :
                 e.printStackTrace()
             }
         } else {
-            // Set default image from drawable
+            // 기본 이미지는 ic_name으로 설정
             val drawableId = context.resources.getIdentifier("ic_name", "drawable", context.packageName)
             imageView.setImageResource(drawableId)
         }
-
-        textView.text = item.name
-        textView3.text = item.number
-
         return view
     }
 }
@@ -94,21 +98,21 @@ class HomeFragment : Fragment() {
         copyAssetToFile(requireContext(), fileName)
 
         people = readFromFile(fileName)
-        val recyclerView: RecyclerView = binding.recyclerView // 변경점 2: listView를 recyclerView로 변경
+        val recyclerView: RecyclerView = binding.recyclerView
         adapter = PersonAdapter(people) { person ->
             showDetailsDialog(person)
         }
         recyclerView.adapter = adapter
-        recyclerView.layoutManager = LinearLayoutManager(requireContext()) // 변경점 3: layoutManager 설정
+        recyclerView.layoutManager = LinearLayoutManager(requireContext())
 
         binding.addContact.setOnClickListener {
             showAddContactDialog(fileName, adapter)
         }
-
         binding.searchContact.setOnClickListener {
             showSearchDialog()
         }
 
+        // FloatingButton 관리
         binding.fab.setOnClickListener {
             if (binding.addContact.visibility == View.VISIBLE) {
                 binding.addContact.visibility = View.GONE
@@ -125,6 +129,7 @@ class HomeFragment : Fragment() {
         super.onDestroyView()
         _binding = null
     }
+
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (resultCode == Activity.RESULT_OK && requestCode == IMAGE_PICK_CODE) {
@@ -132,14 +137,14 @@ class HomeFragment : Fragment() {
                 val updatedPerson = person.copy(imageUri = data?.data?.toString()) // toString 메소드 사용
                 updateContact(person, updatedPerson, adapter)
             }
-            // Dialog를 다시 보여주는 대신, 이미지뷰만 업데이트한다.
+
             currentImageView?.setImageURI(data?.data)
         }
     }
 
     private fun copyAssetToFile(context: Context, fileName: String) {
         val file = File(context.filesDir, fileName)
-        if (file.exists()) {
+        if (file.exists()) { // 만약 file이 존재하면 Json을 복사하지 않음
             return
         }
 
@@ -166,7 +171,7 @@ class HomeFragment : Fragment() {
     }
 
 
-
+    // 메인 Fragment에 떠 있는 연락처 리스트 관리 (RecyclerView)
     class PersonAdapter(private var people: List<Person>, private val onClick: (Person) -> Unit) :
         RecyclerView.Adapter<PersonAdapter.PersonViewHolder>() {
 
@@ -187,7 +192,7 @@ class HomeFragment : Fragment() {
                         e.printStackTrace()
                     }
                 } else {
-                    // Set default image from drawable
+                    // 기본 이미지는 ic_name으로 설정
                     val drawableId = view.resources.getIdentifier("ic_name", "drawable", view.context.packageName)
                     imageView.setImageResource(drawableId)
                 }
@@ -195,6 +200,7 @@ class HomeFragment : Fragment() {
             }
         }
 
+        // 업데이트하면 화면에 바로 반영되도록 하는 함수
         fun updateData(newPeople: List<Person>) {
             this.people = newPeople
             notifyDataSetChanged()
@@ -215,7 +221,7 @@ class HomeFragment : Fragment() {
 
 
 
-    // 연락처 추가
+    // 연락처 추가 함수
     private fun showAddContactDialog(fileName: String, adapter: PersonAdapter) {
         val builder = AlertDialog.Builder(requireContext())
         builder.setTitle("새로운 연락처를 추가하세요!")
@@ -238,27 +244,29 @@ class HomeFragment : Fragment() {
                 val instagram = if (view.findViewById<EditText>(R.id.instagram).text.toString().isBlank()) "none" else view.findViewById<EditText>(R.id.instagram).text.toString()
                 val github = if (view.findViewById<EditText>(R.id.github).text.toString().isBlank()) "none" else view.findViewById<EditText>(R.id.github).text.toString()
 
+
+                // 내부 저장소 업데이트
                 val newPerson = Person(name, number, email, instagram, github, getSelectedImageUriAsString())
                 people = readFromFile(fileName)
                 people.add(newPerson)
                 writeToFile(fileName, people)
-
                 adapter.updateData(people)
 
                 dialog.dismiss()
             }
         }
 
-        dialog.window?.setBackgroundDrawableResource(R.drawable.dialog_border) // 배경 설정
-
-        dialog.show() // AlertDialog 보여주기
+        dialog.window?.setBackgroundDrawableResource(R.drawable.dialog_border)
+        dialog.show()
     }
 
+
+    // 휴대폰 번호에 '-' 넣기 위한 함수
     private fun formatPhoneNumber(number: String): String {
         val digits = number.replace("-", "")
         val formattedNumber = StringBuilder()
         var segmentStart = 0
-        val segmentLengths = intArrayOf(3, 4, 4) // 3글자, 4글자, 4글자
+        val segmentLengths = intArrayOf(3, 4, 4)
 
         for ((index, length) in segmentLengths.withIndex()) {
             val segmentEnd = segmentStart + length
@@ -277,7 +285,7 @@ class HomeFragment : Fragment() {
         return formattedNumber.toString()
     }
 
-    // 세부 정보
+    // 세부 개인 정보
     private fun showDetailsDialog(person: Person) {
         currentPerson = person
         val builder = AlertDialog.Builder(requireContext())
@@ -289,15 +297,13 @@ class HomeFragment : Fragment() {
         builder.setView(dialogView)
         currentImageView = profileImage
 
-        // Set default image from drawable
+        // 기본 이미지는 ic_name으로 설정
         val drawableId = resources.getIdentifier("ic_name", "drawable", requireContext().packageName)
         profileImage.setImageResource(drawableId)
 
-        // If user selected an image, set it
         if (selectedImageUri != null) {
             profileImage.setImageURI(selectedImageUri)
         }
-        // Or if there is a saved image URI for the person, set that
         else if (!person.imageUri.isNullOrEmpty()) {
             try {
                 val imageUri = Uri.parse(person.imageUri)
@@ -314,17 +320,14 @@ class HomeFragment : Fragment() {
         val githubTextView = dialogView.findViewById<TextView>(R.id.githubTextView)
         val deleteButton = dialogView.findViewById<Button>(R.id.deleteButton)
         val editButton = dialogView.findViewById<Button>(R.id.editButton)
+        val dialog = builder.create()
 
-        // Update the TextViews
         nameTextView.text = "이름: ${person.name}"
         numberTextView.text = "전화번호: ${person.number}"
         emailTextView.text = "E-mail: ${person.email}"
         instagramTextView.text = "Instagram ID: ${person.instagram}"
         githubTextView.text = "Github ID: ${person.github}"
-
         builder.setPositiveButton("닫기", null)
-
-        val dialog = builder.create()
 
         deleteButton.setOnClickListener {
             deleteContact(person)
@@ -332,19 +335,24 @@ class HomeFragment : Fragment() {
             adapter.notifyDataSetChanged()
         }
 
-        setToBasicButton.setOnClickListener {
-            // Set the image view to the 'ic_name' drawable
-            val drawableId = resources.getIdentifier("ic_name", "drawable", requireContext().packageName)
-            profileImage.setImageResource(drawableId)
-            // You may also want to update the Person object and its imageUri property
-            currentPerson?.let { person ->
-                val updatedPerson = person.copy(imageUri = null) // Assuming 'ic_name' is the default image
-                updateContact(person, updatedPerson, adapter)
-            }
-            selectedImageUri = null // Updating selectedImageUri to null as 'ic_name' is now the default image
+        editButton.setOnClickListener {
+            dialog.dismiss()
+            showEditContactDialog(person, adapter)
         }
 
+        setToBasicButton.setOnClickListener {
+            // 기본 이미지는 ic_name으로 설정
+            val drawableId = resources.getIdentifier("ic_name", "drawable", requireContext().packageName)
+            profileImage.setImageResource(drawableId)
 
+            currentPerson?.let { person ->
+                val updatedPerson = person.copy(imageUri = null)
+                updateContact(person, updatedPerson, adapter)
+            }
+            selectedImageUri = null
+        }
+
+        // Instagram 클릭 시 Instagram App으로 이동
         instagramTextView.setOnClickListener {
             val username = person.instagram
             val uri = Uri.parse("https://instagram.com/_u/$username")
@@ -358,12 +366,13 @@ class HomeFragment : Fragment() {
             if (activities.isNotEmpty()) {
                 startActivity(instagram)
             } else {
-                // Instagram 앱이 없을 경우 웹 사이트로 이동
+                // Instagram App이 없을 경우 웹 사이트로 이동
                 val webIntent = Intent(Intent.ACTION_VIEW, uri)
                 startActivity(webIntent)
             }
         }
 
+        // Github 클릭 시 Github App으로 이동
         githubTextView.setOnClickListener {
             val username = person.github
             val uri = Uri.parse("https://github.com/$username")
@@ -377,18 +386,14 @@ class HomeFragment : Fragment() {
             }
         }
 
+        // 전화번호 클릭 시 클릭한 번호가 입력된 키패드로 이동
         numberTextView.setOnClickListener {
             val phoneNumber = numberTextView.text.toString()
             val dialIntent = Intent(Intent.ACTION_DIAL, Uri.parse("tel:$phoneNumber"))
             startActivity(dialIntent)
         }
 
-        // Add an OnClickListener for the 'editButton'
-        editButton.setOnClickListener {
-            dialog.dismiss()
-            showEditContactDialog(person, adapter)
-        }
-
+        // 프로필 이미지 클릭 시 갤러리로 이동
         profileImage.setOnClickListener {
             val intent = Intent(Intent.ACTION_PICK)
             intent.type = "image/*"
@@ -401,19 +406,16 @@ class HomeFragment : Fragment() {
 
         dialog.window?.setBackgroundDrawableResource(R.drawable.dialog_border)
         dialog.show()
-
         currentDialog = dialog
         dialog.show()
     }
 
-
-
-
+    // 선택한 이미지의 Uri를 반환
     private fun getSelectedImageUriAsString(): String? {
         return selectedImageUri?.toString()
     }
 
-
+    // 연락처 수정
     private fun showEditContactDialog(person: Person, adapter: PersonAdapter) {
         currentPerson = person
         val builder = AlertDialog.Builder(requireContext())
@@ -422,7 +424,6 @@ class HomeFragment : Fragment() {
         val view = layoutInflater.inflate(R.layout.dialog_edit_contact, null)
         builder.setView(view)
 
-        // Set existing values
         view.findViewById<EditText>(R.id.name).setText(person.name)
         view.findViewById<EditText>(R.id.number).setText(person.number)
         view.findViewById<EditText>(R.id.email).setText(person.email)
@@ -449,9 +450,8 @@ class HomeFragment : Fragment() {
             }
         }
 
-        dialog.window?.setBackgroundDrawableResource(R.drawable.dialog_border) // 배경 설정
-        dialog.show() // AlertDialog 보여주기
-
+        dialog.window?.setBackgroundDrawableResource(R.drawable.dialog_border)
+        dialog.show()
         currentDialog = dialog
         dialog.show()
     }
@@ -468,6 +468,7 @@ class HomeFragment : Fragment() {
         }
     }
 
+    // 연락처 삭제 함수
     private fun deleteContact(person: Person) {
         val fileName = "numbers.json"
         people = readFromFile(fileName)
@@ -476,6 +477,7 @@ class HomeFragment : Fragment() {
         adapter.updateData(people)
     }
 
+    // 연락처 업데이트 함수
     private fun updateContact(oldPerson: Person, newPerson: Person, adapter: PersonAdapter) {
         val fileName = "numbers.json"
         people = readFromFile(fileName)
@@ -487,8 +489,7 @@ class HomeFragment : Fragment() {
         }
     }
 
-
-    // 연락처 검색 결과
+    // 연락처 검색 Dialog
     private fun showSearchDialog() {
         val builder = AlertDialog.Builder(requireContext())
         builder.setTitle("검색")
@@ -507,7 +508,6 @@ class HomeFragment : Fragment() {
         builder.setNegativeButton("취소", null)
 
         val dialog = builder.create()
-
         dialog.setOnShowListener {
             val positiveButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE)
             positiveButton.setOnClickListener {
@@ -521,44 +521,35 @@ class HomeFragment : Fragment() {
             }
         }
 
-        dialog.window?.setBackgroundDrawableResource(R.drawable.dialog_border) // 배경 설정
-
-        dialog.show() // AlertDialog 보여주기
+        dialog.window?.setBackgroundDrawableResource(R.drawable.dialog_border)
+        dialog.show()
     }
 
-    // 연락처 검색 결과
+    // 연락처 검색 결과를 보여주는 Dialog
     private fun showSearchResultsDialog(searchResults: List<Person>) {
         val context = context
         if (context != null) {
             val builder = AlertDialog.Builder(context)
             builder.setTitle("검색 결과")
 
-            // Inflate the custom layout
             val view = LayoutInflater.from(context).inflate(R.layout.dialog_list, null)
             val listView = view.findViewById<ListView>(R.id.listView22)
 
-            // Create a list of PersonItem objects
             val personItems = searchResults.map { PersonItem(it.imageUri, it.name, it.number) }
 
-            // Create an adapter
             val adapter = PersonItemAdapter(context, personItems)
 
-            // Set the adapter to the ListView
             listView.adapter = adapter
 
-            // Set the item click listener
             listView.setOnItemClickListener { _, _, position, _ ->
                 val selectedPerson = searchResults[position]
                 showDetailsDialog(selectedPerson)
             }
 
-            // Set the custom view to the dialog
             builder.setView(view)
-
             builder.setPositiveButton("닫기", null)
 
             val dialog = builder.create()
-
             dialog.setOnShowListener {
                 val positiveButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE)
                 positiveButton.setOnClickListener {
@@ -570,5 +561,4 @@ class HomeFragment : Fragment() {
             dialog.show()
         }
     }
-
 }
