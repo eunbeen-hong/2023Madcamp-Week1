@@ -68,28 +68,16 @@
 
 
 
-    <HorizontalScrollView
-        android:id="@+id/imageListView"
+    <androidx.viewpager2.widget.ViewPager2
+        android:id="@+id/imageList"
         android:layout_width="match_parent"
         android:layout_height="300dp"
         android:background="@color/grey"
         android:layout_margin="5dp"
-        tools:layout_editor_absoluteX="16dp"
-        tools:layout_editor_absoluteY="221dp"
         app:layout_constraintBottom_toTopOf="@+id/contactListView"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/date">
-
-        <LinearLayout
-            android:id="@+id/imageList"
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:orientation="horizontal"
-            android:fontFamily="@font/nanumsquareround_otfeb"
-            android:textSize="16sp">
-        </LinearLayout>
-    </HorizontalScrollView>
+        app:layout_constraintTop_toBottomOf="@+id/date"/>
 
     <HorizontalScrollView
         android:id="@+id/contactListView"
@@ -101,7 +89,7 @@
         tools:layout_editor_absoluteY="221dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/imageListView">
+        app:layout_constraintTop_toBottomOf="@+id/imageList">
 
         <LinearLayout
             android:id="@+id/contactList"

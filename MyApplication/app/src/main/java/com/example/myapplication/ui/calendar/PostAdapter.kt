@@ -21,6 +21,7 @@ import android.widget.Toast
 import com.example.myapplication.R
 import android.graphics.BitmapFactory
 import android.os.AsyncTask
+import androidx.viewpager2.widget.ViewPager2
 import java.io.InputStream
 
 class LoadImageTask(private val imageView: ImageView) : AsyncTask<Uri, Void, Bitmap?>() {
@@ -109,7 +110,7 @@ class PostAdapter(private val context: Context, private var posts: MutableList<P
         val travelName: TextView = view.findViewById(R.id.travelName)
         val location: TextView = view.findViewById(R.id.location)
         val date: EditText = view.findViewById(R.id.date)
-        val imageList: LinearLayout = view.findViewById(R.id.imageList)
+        val imageViewPager: ViewPager2 = view.findViewById(R.id.imageList)
         val contactList: LinearLayout = view.findViewById(R.id.contactList)
         val note: TextView = view.findViewById(R.id.note)
         val addPhotoButton: Button = view.findViewById(R.id.add_photo)
@@ -123,7 +124,7 @@ class PostAdapter(private val context: Context, private var posts: MutableList<P
 
         val imageCount = post.imgList.size
         Toast.makeText(context, "Image Count: $imageCount", Toast.LENGTH_SHORT).show()
-        imageList.removeAllViews()
+//        imageList.removeAllViews()
 
         /////////////////////delete post////////////////////////
         deleteButton.setOnClickListener {
@@ -135,20 +136,8 @@ class PostAdapter(private val context: Context, private var posts: MutableList<P
             showEditDialog(posts, position)
         }
 
-        // FIXME
         /////////////////////images////////////////////////
-
-        for (uri in post.imgList) {
-            val imageView = ImageView(context)
-            imageView.layoutParams = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT, 300
-            )
-            imageView.adjustViewBounds = true
-            imageView.scaleType = ImageView.ScaleType.FIT_XY // or ImageView.ScaleType.CENTER_CROP
-            imageList.addView(imageView)
-
-            LoadImageTask(imageView).execute(uri)
-        }
+        imageViewPager.adapter = ImageAdapter(context, post.imgList)
 
         /////////////////////contacts////////////////////////
         for (contact in post.contactList) {

@@ -170,12 +170,21 @@ class CalendarFragment : Fragment() {
                 selectedUris.add(uri)
             }
 
-            currentPost?.let { postToUpdate ->
-                postToUpdate.imgList.addAll(selectedUris)
+//            currentPost?.let { postToUpdate ->
+//                postToUpdate.imgList.addAll(selectedUris)
+//                postAdapter.notifyDataSetChanged()
+//            }
+            currentPost?.let { currentPost ->
+                currentPost.imgList.addAll(selectedUris)
+//                writeToFile(fileName, getPostSorted(postList))
                 postAdapter.notifyDataSetChanged()
             }
         }
     }
+
+    // TODO: 홍은빈
+    // 사진 넘어갈때 인스타 아래처럼 몇번째 사진인지? 그런거 할 수 잇으면
+    // 이미지 추가하고 저장 안됨 (writeToFile 해야함)
 
     private fun showNewPostDialog(fileName: String, postAdapter: PostAdapter) {
         val builder = AlertDialog.Builder(requireContext())
