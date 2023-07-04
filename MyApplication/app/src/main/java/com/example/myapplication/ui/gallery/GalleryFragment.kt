@@ -2,12 +2,10 @@ package com.example.myapplication.ui.gallery
 
 import android.app.Activity.RESULT_OK
 import android.app.AlertDialog
-import android.content.ContentUris
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.icu.text.SimpleDateFormat
-import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
@@ -24,7 +22,6 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import com.bumptech.glide.Glide
@@ -35,7 +32,6 @@ import com.google.gson.reflect.TypeToken
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
-import java.io.OutputStream
 import java.util.Date
 import java.util.Locale
 import kotlin.properties.Delegates
@@ -124,10 +120,10 @@ class GalleryFragment : Fragment() {
             albumNames.add(album.albumName)
         }
 
-        // 1. 창 닫기
+        // 2-1. 창 닫기
         builderShow.setPositiveButton("닫기") {dialog, _ -> dialog.dismiss()}
 
-        // 2. 앨범으로 복사하기
+        // 2-2. 앨범으로 복사하기
         builderShow.setNegativeButton("앨범") {_, _ ->
             val builderAlbum = AlertDialog.Builder(context) // 앨범 이동을 위한 새로운 창을 띄운다.
             builderAlbum.setTitle("앨범으로 복사")
@@ -153,7 +149,7 @@ class GalleryFragment : Fragment() {
             builderAlbum.create().show()
         }
 
-        // 3. 삭제하기
+        // 2-3. 사진 삭제하기
         builderShow.setNeutralButton("삭제") {_, _ ->
             if (currentAlbumIndex == -1) { // "전체 사진"인 상태에서 사진을 삭제하는 경우 실제 저장소에서도 사진을 삭제한다.
                 val builderDeleteAtStorage = AlertDialog.Builder(context) // 삭제 확인을 위한 새로운 창을 띄운다.
@@ -194,7 +190,7 @@ class GalleryFragment : Fragment() {
         builderShow.create().show()
     }
 
-    // 3. SD 저장소에서 사진 삭제하기
+    // 3. SD 저장소에서 사진 삭제하기 (현재 높은 버전에서는 제대로 작동하지 않는다!)
     private fun deletePhoto(imagePath: String): Boolean { // 삭제 버튼을 누르면 해당 사진을 저장소에서 삭제한다.
         fun getImageId(imagePath: String): Long? { // 보조 함수
             val uri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI
@@ -213,20 +209,25 @@ class GalleryFragment : Fragment() {
         }
 
         val resolver = requireContext().contentResolver
-        return if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) { // 안드로이드 낮은 버전에서는 기존 방식대로 한다.
+        return if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) { // 안드로이드 낮은 버전에서는 기존 방식대로 한다.
             val selection = MediaStore.Images.Media.DATA + "=?"
             val selectionArgs = arrayOf(imagePath)
             val deletedRows = resolver.delete(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, selection, selectionArgs)
             deletedRows > 0
         } else { // 안드로이드 높은 버전에서는 새로운 방식대로 한다.
-            val imageId = getImageId(imagePath) // imagePath로부터 이미지의 ID를 가져옴
+            /*val imageId = getImageId(imagePath) // imagePath로부터 이미지의 ID를 가져옴
             if (imageId != null && imageId > -1) {
                 val uri = ContentUris.withAppendedId(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, imageId)
                 val deletedRows = resolver.delete(uri, null, null)
                 deletedRows > 0
             } else {
                 false
-            }
+            }*/
+            val collection = MediaStore.Images.Media.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)
+            val selection = MediaStore.Images.Media.DATA + "= ?"
+            val selectionArgs = arrayOf(imagePath)
+            val deletedRows = resolver.delete(collection, selection, selectionArgs)
+            deletedRows > 0
         }
     }
 
@@ -239,28 +240,72 @@ class GalleryFragment : Fragment() {
         activityResult.launch(takePictureIntent)
     }
 
+    // 5. 카메라 사진 촬영 결과 저장하기
     @Throws(IOException::class)
     private fun createImageFile(): File? {
         val timeStamp: String = SimpleDateFormat("yyyyMMdd_HHmmss_SSS", Locale.getDefault()).format(Date())
-        val storageDir: File? = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
-        return File.createTempFile("JPEG_${timeStamp}_", ".jpg", storageDir).apply {
+        val storageDir = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM).toString() + "/Camera")
+        return File.createTempFile("MADCAMP_${timeStamp}_", ".jpg", storageDir)//.apply {
             // Save a file: path for use with ACTION_VIEW intents
-            currentPhotoPath = absolutePath
-        }
+            //currentPhotoPath = absolutePath
+        //}
     }
 
+    /*private fun saveImageOnAboveAndroidQ(bitmap: Bitmap) {
+        val fileName = SimpleDateFormat("yyyyMMdd_HHmmss_SSS", Locale.getDefault()).format(Date()) + ".jpg" // 파일이름 = 현재시간.jpg
+        val contentResolver = requireContext().contentResolver
+
+        /*
+        * ContentValues() 객체 생성.
+        * ContentValues는 ContentResolver가 처리할 수 있는 값을 저장해둘 목적으로 사용된다.
+        * */
+        val contentValues = ContentValues()
+        contentValues.apply {
+            put(MediaStore.Images.Media.RELATIVE_PATH, "DCIM/Camera") // 경로 설정
+            put(MediaStore.Images.Media.DISPLAY_NAME, fileName) // 파일이름을 put해준다.
+            put(MediaStore.Images.Media.MIME_TYPE, "image/jpg")
+            put(MediaStore.Images.Media.IS_PENDING, 1) // 현재 is_pending 상태임을 만들어준다.
+            // 다른 곳에서 이 데이터를 요구하면 무시하라는 의미로, 해당 저장소를 독점할 수 있다.
+        }
+
+        // 이미지를 저장할 uri를 미리 설정해놓는다.
+        val uri = contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
+
+        try {
+            if(uri != null) {
+                val image = contentResolver.openFileDescriptor(uri, "w", null) // write 모드로 file을 open한다.
+                if(image != null) {
+                    val fos = FileOutputStream(image.fileDescriptor)
+                    bitmap.compress(Bitmap.CompressFormat.PNG, 100, fos) //비트맵을 FileOutputStream를 통해 compress한다.
+                    fos.close()
+
+                    contentValues.clear()
+                    contentValues.put(MediaStore.Images.Media.IS_PENDING, 0) // 저장소 독점을 해제한다.
+                    contentResolver.update(uri, contentValues, null, null)
+                }
+            }
+        } catch(e: FileNotFoundException) {
+            e.printStackTrace()
+        } catch (e: IOException) {
+            e.printStackTrace()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }*/
+
+
+
+
     private fun saveImageToFile(imageBitmap: Bitmap) {
-        /*val fileOutputStream: FileOutputStream?
+        val fileOutputStream: FileOutputStream?
         val file = createImageFile() // 이미지 파일을 생성하기 위한 메서드 호출
         try {
             fileOutputStream = FileOutputStream(file)
             imageBitmap.compress(Bitmap.CompressFormat.JPEG, 100, fileOutputStream)
             fileOutputStream.close()
-            Toast.makeText(requireContext(), "이미지가 저장되었습니다.", Toast.LENGTH_SHORT).show()
         } catch (e: Exception) {
             e.printStackTrace()
-            Toast.makeText(requireContext(), "이미지 저장 중 오류가 발생했습니다.", Toast.LENGTH_SHORT).show()
-        } */
+        } /*
         var folderPath = MediaStore.Images.Media.DATA
         var fileName = "comment.jpeg"
 
@@ -269,7 +314,7 @@ class GalleryFragment : Fragment() {
 
         var out = FileOutputStream(folderPath + fileName)
 
-        imageBitmap.compress(Bitmap.CompressFormat.JPEG, 100, out)
+        imageBitmap.compress(Bitmap.CompressFormat.JPEG, 100, out) */
     }
 
     private val activityResult: ActivityResultLauncher<Intent> = registerForActivityResult( // 카메리 앱 실행 후 사진 저장하기
@@ -279,8 +324,8 @@ class GalleryFragment : Fragment() {
 
             val imageBitmap = it.data?.extras?.get("data") as? Bitmap
             if (imageBitmap != null) {
-                //saveImageToFile(imageBitmap)
-
+                saveImageToFile(imageBitmap)
+/*
                 val imageFileName = "MY_IMG_${System.currentTimeMillis()}.jpg"
                 val storageDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
 
@@ -288,12 +333,9 @@ class GalleryFragment : Fragment() {
                 val imageFile = File(storageDir, imageFileName)
 
 // 이미지 파일의 Uri 생성
-                val imageUri = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                val imageUri =
                     // Android N 이상 버전부터는 FileProvider를 사용하여 Uri를 생성해야 함
                     FileProvider.getUriForFile(requireContext(), "com.example.android.fileprovider", imageFile)
-                } else {
-                    Uri.fromFile(imageFile)
-                }
 
 // 이미지 파일 저장
                 val outputStream: OutputStream? = requireContext().contentResolver.openOutputStream(imageUri)
@@ -305,22 +347,22 @@ class GalleryFragment : Fragment() {
                 mediaScanIntent.data = imageUri
                 requireContext().sendBroadcast(mediaScanIntent)
 
-
+*/
             }
             Toast.makeText(requireContext(), "저장 완료!", Toast.LENGTH_SHORT).show()
         } else {
-            Toast.makeText(requireContext(), "저장 취소?", Toast.LENGTH_SHORT).show()
+            Toast.makeText(requireContext(), "저장 실패?", Toast.LENGTH_SHORT).show()
         }
     }
 
-    // 팝업 메뉴 띄우기
+    // 6. 팝업 메뉴 띄우기
     private fun showPopupMenu(view: View, uriArr: ArrayList<String>, adapter: GridAdapter, albumTitle: TextView) { // 정렬 버튼을 누르면 팝업 메뉴가 나타난다. 선택한 item에 따라 사진이 정렬된다.
         val popupMenu = PopupMenu(requireContext(), view)
         popupMenu.menuInflater.inflate(R.menu.gallery_change_order_menu, popupMenu.menu)
 
         popupMenu.setOnMenuItemClickListener { menuItem ->
             when (menuItem.itemId) {
-                // 1. 메뉴에서 "정렬" 항목을 클릭할 경우
+                // 6-1. 메뉴에서 "정렬" 항목을 클릭할 경우
                 R.id.gallery_menu_order -> {
                     val builderOrder = AlertDialog.Builder(context) // 정렬을 위한 새로운 창을 띄운다.
                     builderOrder.setTitle("정렬하기")
@@ -338,7 +380,7 @@ class GalleryFragment : Fragment() {
                     true
                 }
 
-                // 2. 메뉴에서 "앨범 선택" 항목을 클릭할 경우
+                // 6-2. 메뉴에서 "앨범 선택" 항목을 클릭할 경우
                 R.id.gallery_menu_album_select -> {
                     // 앨범 선택을 위한 새로운 창을 띄운다.
                     val builderAlbum = AlertDialog.Builder(context)
@@ -356,8 +398,8 @@ class GalleryFragment : Fragment() {
                     builderAlbum.setSingleChoiceItems(albumNames.toTypedArray(), 0) {_, position ->
                         selectedAlbumPosition = position
                     }
-
-                    builderAlbum.setPositiveButton("확인") {_, _ -> // 확인 버튼을 누르면 해당 앨범을 보여준다
+                    // 6-2-1. 확인 버튼을 누르면 해당 앨범을 보여준다.
+                    builderAlbum.setPositiveButton("확인") {_, _ ->
                         val selectedAlbumImages = if (selectedAlbumPosition == 0) { // 0은 앨범 없이 전체 사진을 가리킨다.
                             getAllPhotos()
                         } else {
@@ -376,7 +418,7 @@ class GalleryFragment : Fragment() {
                     val createdAlbum = builderAlbum.create()
 
                     createdAlbum.setOnShowListener {dialog ->
-                        // 앨범 삭제 버튼
+                        // 6-2-2. 앨범 삭제 버튼
                         val neutralButton = createdAlbum.getButton(AlertDialog.BUTTON_NEUTRAL)
                         neutralButton.setOnClickListener {
                             if (selectedAlbumPosition == 0) { // "전체 사진"을 고르면, 아무 일도 일어나지 않는다.
@@ -410,7 +452,7 @@ class GalleryFragment : Fragment() {
                                 builderDeleteAlbum.create().show()
                             }
                         }
-                        // 앨범 이름 변경 버튼
+                        // 6-2-3. 앨범 이름 변경 버튼
                         val negativeButton = createdAlbum.getButton(AlertDialog.BUTTON_NEGATIVE)
                         negativeButton.setOnClickListener {
                             if (selectedAlbumPosition == 0) { // "전체 사진"을 고르면, 아무 일도 일어나지 않는다.
@@ -456,7 +498,7 @@ class GalleryFragment : Fragment() {
                     true
                 }
 
-                // 3. 메뉴에서 "앨범 생성" 항목을 클릭할 경우
+                // 6-3. 메뉴에서 "앨범 생성" 항목을 클릭할 경우
                 R.id.gallery_menu_album_make -> {
                     val albumFile = "albums.json"
                     copyAssetToFile(requireContext(), albumFile)
@@ -504,7 +546,7 @@ class GalleryFragment : Fragment() {
         popupMenu.show()
     }
 
-    // 팝업 메뉴 중 정렬 기능을 위한 함수 (선택한 앨범에 대해서도 정렬 가능)
+    // 6.1. 팝업 메뉴 중 정렬 기능을 위한 함수 (선택한 앨범에 대해서도 정렬 가능)
     private fun changeGridViewOrder(position: Int, uriArr: ArrayList<String>, adapter: GridAdapter) {
         // orderList = ["이름 (가나다순)", "이름 (가나다 역순)", "날짜 (오름차순)", "날짜 (내림차순)"]
         when(position) {
@@ -539,7 +581,7 @@ class GalleryFragment : Fragment() {
         }
     }
 
-    // json 파일 읽고 쓰기 관련 함수
+    // 7.1. json 파일 읽고 쓰기 관련 함수
     private fun copyAssetToFile(context: Context, fileName: String) {
         val file = File(context.filesDir, fileName)
         if (file.exists()) {
@@ -556,12 +598,14 @@ class GalleryFragment : Fragment() {
         outputStream.close()
     }
 
+    // 7.2. json 파일 읽고 쓰기 관련 함수
     private fun writeToFile(fileName: String, people: List<Album>) {
         val file = File(requireContext().filesDir, fileName)
         val json = gson.toJson(people)
         file.writeText(json)
     }
 
+    // 7.3. json 파일 읽고 쓰기 관련 함수
     private fun readFromFile(fileName: String): MutableList<Album> {
         val file = File(requireContext().filesDir, fileName)
         val json = file.readText()
@@ -575,6 +619,7 @@ class GalleryFragment : Fragment() {
 }
 /*
 * <한 일>
+* - 권한 설정 (33이상 또는 미만)
 * - 사진 정렬 기능
 * - 앨범 기능 (종료해도 유지, 삭제하면 날라감)
 * - 앨범 생성 기능
@@ -583,12 +628,14 @@ class GalleryFragment : Fragment() {
 * - 앨범 이름 변경 기능
 * - 앨범 삭제 기능
 * - 사진 삭제 기능 (전체 사진에서 삭제할 경우 저장소에서도 삭제되지만, 앨범에서 삭제할 경우 앨범에서만 삭제된다)
+*   -> (상위 버전에서는 현재 삭제 불가)
+* - 앱 이름 및 아이콘 변경
 *
 * <해야 할 일>
-* - 카메라 촬영 후 저장소에 저장 구현
+* - 카메라 촬영 후 저장소에 저장 구현 (실패)
 *
 * 
-* <새로운 기능>
+* <추가할 수 있는 기능>
 * - 위치 기능
 * - 주소록 태그 기능
 *

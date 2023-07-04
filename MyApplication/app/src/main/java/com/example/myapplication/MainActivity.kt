@@ -2,6 +2,7 @@ package com.example.myapplication
 
 import android.Manifest
 import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import android.widget.Toast
 import com.google.android.material.bottomnavigation.BottomNavigationView
@@ -38,14 +39,19 @@ class MainActivity : AppCompatActivity() {
         checkPermission() // 파일 접근 권한과 카메라 접근 권한을 확인하자
     }
 
+    // 핸드폰 권한 요청
     private fun checkPermission() {
-        val permissionList = arrayOf( // 요청하고자 하는 권한 목록 (파일 쓰기, 파일 읽기, 카메라)
-            Manifest.permission.WRITE_EXTERNAL_STORAGE,
-            Manifest.permission.READ_EXTERNAL_STORAGE,
-            //Manifest.permission.READ_MEDIA_AUDIO,
-            //Manifest.permission.READ_MEDIA_IMAGES,
-            //Manifest.permission.READ_MEDIA_VIDEO,
-            Manifest.permission.CAMERA)
+        val permissionList = if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) { // 낮은 버전
+            arrayOf( // 요청하고자 하는 권한 목록 (파일 쓰기, 파일 읽기, 카메라)
+                Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                Manifest.permission.READ_EXTERNAL_STORAGE,
+                Manifest.permission.CAMERA)
+        } else { // API 33 이상인 높은 버전
+            arrayOf(
+                Manifest.permission.READ_MEDIA_IMAGES,
+                Manifest.permission.READ_MEDIA_VIDEO,
+                Manifest.permission.CAMERA)
+        }
         for (i in permissionList) {
             // 리스트 중에 만약 현재 허용하지 않은 권한이 있다면, 권한을 요청한다.
             if (ContextCompat.checkSelfPermission(this, i) != PackageManager.PERMISSION_GRANTED) {
@@ -55,6 +61,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    // 핸드폰 권한 요청 결과 처리
     override fun onRequestPermissionsResult(
         requestCode: Int,               // 요청한 주체를 확인하는 코드
         permissions: Array<out String>, // 요청한 권한 목록
@@ -62,9 +69,9 @@ class MainActivity : AppCompatActivity() {
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == myPermissionRequestCode && grantResults.all { it == PackageManager.PERMISSION_GRANTED }) {
-            Toast.makeText(this,"권한 성공.", Toast.LENGTH_LONG).show()
+            Toast.makeText(this,"권한 성공", Toast.LENGTH_LONG).show()
         } else {
-            Toast.makeText(this,"권한 내놔.", Toast.LENGTH_LONG).show()
+            Toast.makeText(this,"권한 내놔!", Toast.LENGTH_LONG).show()
             checkPermission()
         }
     }

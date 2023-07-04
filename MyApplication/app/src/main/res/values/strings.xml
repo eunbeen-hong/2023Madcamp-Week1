@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">My Application</string>
+    <string name="app_name">트래블래너</string>
     <string name="title_home">Home</string>
     <string name="title_gallery">Gallery</string>
     <string name="title_calendar">Calendar</string>
