@@ -9,11 +9,12 @@
 
     <ImageButton
         android:id="@+id/checkButton"
-        android:layout_width="50dp"
-        android:layout_height="50dp"
+        android:layout_width="30dp"
+        android:layout_height="30dp"
         android:contentDescription="Check Button"
         android:scaleType="centerInside"
         android:src="@drawable/check_false"
+        android:background="@color/white"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@+id/taskText"
         app:layout_constraintStart_toStartOf="parent"
@@ -22,7 +23,7 @@
     <TextView
         android:id="@+id/taskText"
         android:layout_width="0dp"
-        android:layout_height="50dp"
+        android:layout_height="30dp"
         android:contentDescription="Task"
         android:layout_gravity="center"
         app:autoSizeTextType="uniform"
@@ -35,12 +36,13 @@
 
     <ImageButton
         android:id="@+id/deleteButton"
-        android:layout_width="50dp"
-        android:layout_height="50dp"
+        android:layout_width="30dp"
+        android:layout_height="30dp"
         android:contentDescription="Delete Button"
         android:layout_gravity="center"
         android:scaleType="centerInside"
         android:src="@drawable/delete_button"
+        android:background="@color/white"
         app:layout_constraintStart_toEndOf="@+id/taskText"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"
