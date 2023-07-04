@@ -5,7 +5,7 @@ import android.app.AlertDialog
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
-import android.icu.text.SimpleDateFormat
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
@@ -30,10 +30,9 @@ import com.example.myapplication.databinding.FragmentGalleryBinding
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import java.io.File
+import java.io.FileNotFoundException
 import java.io.FileOutputStream
 import java.io.IOException
-import java.util.Date
-import java.util.Locale
 import kotlin.properties.Delegates
 
 
@@ -47,6 +46,8 @@ class GalleryFragment : Fragment() {
     private val binding get() = _binding!!
     private val gson = Gson()
     private var currentAlbumIndex = -1 // 현재 그리드뷰로 보여지는 앨범이 albums에서 몇 번째 index인지를 나타낸다. (-1은 "전체 사진"을 가리킨다)
+    private lateinit var uriArrForCameraApp: ArrayList<String>
+    private lateinit var adapterForCameraApp: GridAdapter
 
     override fun onCreateView(
             inflater: LayoutInflater,
@@ -65,6 +66,7 @@ class GalleryFragment : Fragment() {
         val uriArr = getAllPhotos()
         val gridViewAdapter = GridAdapter(requireContext(), uriArr) // 사진 목록을 adapter에 전달한 후,
         gridView.adapter =  gridViewAdapter                         // adapter를 gridView에 연결한다.
+        adapterForCameraApp = gridViewAdapter
 
         gridView.onItemClickListener = AdapterView.OnItemClickListener { _, _, position, _ -> // 사진 하나를 클릭하면 실행된다.
             showImagePopup(requireContext(), uriArr, position, gridViewAdapter)
@@ -72,6 +74,7 @@ class GalleryFragment : Fragment() {
 
         cameraButton.setOnClickListener { // 버튼을 누르면 카메라 앱을 실행한다.
             Toast.makeText(requireContext(), "카메라 실행", Toast.LENGTH_SHORT).show()
+            uriArrForCameraApp = uriArr
             executeCameraApp()
         }
 
@@ -230,128 +233,111 @@ class GalleryFragment : Fragment() {
             deletedRows > 0
         }
     }
-
-
-    private lateinit var currentPhotoPath: String
     
     // 4. 카메라 앱 실행하기
     private fun executeCameraApp() { // 플로팅 카메라 버튼을 누르면 카메라 앱을 실행한다.
         val takePictureIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
         activityResult.launch(takePictureIntent)
-    }
 
-    // 5. 카메라 사진 촬영 결과 저장하기
+        //dispatchTakePictureIntent()
+        //galleryAddPic()
+    }
+/*
+    lateinit var currentPhotoPath: String
+
     @Throws(IOException::class)
-    private fun createImageFile(): File? {
-        val timeStamp: String = SimpleDateFormat("yyyyMMdd_HHmmss_SSS", Locale.getDefault()).format(Date())
-        val storageDir = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM).toString() + "/Camera")
-        return File.createTempFile("MADCAMP_${timeStamp}_", ".jpg", storageDir)//.apply {
+    private fun createImageFile(): File {
+        // Create an image file name
+        val timeStamp: String = SimpleDateFormat("yyyyMMdd_HHmmss").format(Date())
+        val storageDir: File? = requireContext().getExternalFilesDir(Environment.DIRECTORY_PICTURES)
+        return File.createTempFile(
+            "MAD_${timeStamp}_", /* prefix */
+            ".jpg", /* suffix */
+            storageDir /* directory */
+        ).apply {
             // Save a file: path for use with ACTION_VIEW intents
-            //currentPhotoPath = absolutePath
-        //}
+            currentPhotoPath = absolutePath
+        }
     }
 
-    /*private fun saveImageOnAboveAndroidQ(bitmap: Bitmap) {
-        val fileName = SimpleDateFormat("yyyyMMdd_HHmmss_SSS", Locale.getDefault()).format(Date()) + ".jpg" // 파일이름 = 현재시간.jpg
-        val contentResolver = requireContext().contentResolver
-
-        /*
-        * ContentValues() 객체 생성.
-        * ContentValues는 ContentResolver가 처리할 수 있는 값을 저장해둘 목적으로 사용된다.
-        * */
-        val contentValues = ContentValues()
-        contentValues.apply {
-            put(MediaStore.Images.Media.RELATIVE_PATH, "DCIM/Camera") // 경로 설정
-            put(MediaStore.Images.Media.DISPLAY_NAME, fileName) // 파일이름을 put해준다.
-            put(MediaStore.Images.Media.MIME_TYPE, "image/jpg")
-            put(MediaStore.Images.Media.IS_PENDING, 1) // 현재 is_pending 상태임을 만들어준다.
-            // 다른 곳에서 이 데이터를 요구하면 무시하라는 의미로, 해당 저장소를 독점할 수 있다.
-        }
-
-        // 이미지를 저장할 uri를 미리 설정해놓는다.
-        val uri = contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
-
-        try {
-            if(uri != null) {
-                val image = contentResolver.openFileDescriptor(uri, "w", null) // write 모드로 file을 open한다.
-                if(image != null) {
-                    val fos = FileOutputStream(image.fileDescriptor)
-                    bitmap.compress(Bitmap.CompressFormat.PNG, 100, fos) //비트맵을 FileOutputStream를 통해 compress한다.
-                    fos.close()
-
-                    contentValues.clear()
-                    contentValues.put(MediaStore.Images.Media.IS_PENDING, 0) // 저장소 독점을 해제한다.
-                    contentResolver.update(uri, contentValues, null, null)
+    private fun dispatchTakePictureIntent() {
+        Intent(MediaStore.ACTION_IMAGE_CAPTURE).also { takePictureIntent ->
+            // Ensure that there's a camera activity to handle the intent
+            takePictureIntent.resolveActivity(requireContext().packageManager)?.also {
+                // Create the File where the photo should go
+                val photoFile: File? = try {
+                    createImageFile()
+                } catch (ex: IOException) {
+                    null
+                }
+                // Continue only if the File was successfully created
+                photoFile?.also {
+                    val photoURI: Uri = FileProvider.getUriForFile(
+                        requireContext(),
+                        "com.example.android.fileprovider",
+                        it
+                    )
+                    takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI)
+                    startActivityForResult(takePictureIntent, 123)
                 }
             }
-        } catch(e: FileNotFoundException) {
+        }
+    }
+
+    private fun galleryAddPic() {
+        Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE).also { mediaScanIntent ->
+            val f = File(currentPhotoPath)
+            mediaScanIntent.data = Uri.fromFile(f)
+            requireContext().sendBroadcast(mediaScanIntent)
+        }
+    } */
+
+    // 4-1. 카메라 앱 실행 결과 처리하기
+    private val activityResult: ActivityResultLauncher<Intent> =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+            if((it.resultCode == RESULT_OK) && (it.data != null)) { // 사진을 제대로 촬영하고 저장을 요청한 경우
+                // val extras = it.data!!.extras // 값 담기
+
+                val imageBitmap = it.data?.extras?.get("data") as? Bitmap
+                if (imageBitmap != null) {
+                    saveImageOnUnderAndroidQ(imageBitmap)
+                }
+                uriArrForCameraApp.clear()
+                uriArrForCameraApp.addAll(getAllPhotos())
+                adapterForCameraApp.notifyDataSetChanged()
+                Toast.makeText(requireContext(), "저장 완료", Toast.LENGTH_SHORT).show()
+            } else {
+                Toast.makeText(requireContext(), "저장 취소", Toast.LENGTH_SHORT).show()
+            }
+        }
+
+
+    // 5. 카메라 사진 촬영 결과 저장하기
+    private fun saveImageOnUnderAndroidQ(bitmap: Bitmap) {
+        val fileName = System.currentTimeMillis().toString() + ".png"
+        val externalStorage = Environment.getExternalStorageDirectory().absolutePath
+        val path = "$externalStorage/DCIM/Camera"
+        val dir = File(path)
+        if(dir.exists().not()) { // 해당 폴더가 없을 경우 폴더 생성
+            dir.mkdirs()
+        }
+
+        try {
+            val fileItem = File("$dir/$fileName")
+            fileItem.createNewFile() //0KB 파일 생성.
+
+            val fileOutputStream = FileOutputStream(fileItem) // 파일 아웃풋 스트림
+            bitmap.compress(Bitmap.CompressFormat.PNG, 100, fileOutputStream) // 파일 아웃풋 스트림 객체를 통해서 Bitmap 압축
+            fileOutputStream.close() // 파일 아웃풋 스트림 객체 close
+
+            // 브로드캐스트 수신자에게 파일 미디어 스캔 액션 요청. 그리고 데이터로 추가된 파일에 Uri를 넘겨준다.
+            requireContext().sendBroadcast(Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.fromFile(fileItem)))
+        } catch (e: FileNotFoundException) {
             e.printStackTrace()
         } catch (e: IOException) {
             e.printStackTrace()
         } catch (e: Exception) {
             e.printStackTrace()
-        }
-    }*/
-
-
-
-
-    private fun saveImageToFile(imageBitmap: Bitmap) {
-        val fileOutputStream: FileOutputStream?
-        val file = createImageFile() // 이미지 파일을 생성하기 위한 메서드 호출
-        try {
-            fileOutputStream = FileOutputStream(file)
-            imageBitmap.compress(Bitmap.CompressFormat.JPEG, 100, fileOutputStream)
-            fileOutputStream.close()
-        } catch (e: Exception) {
-            e.printStackTrace()
-        } /*
-        var folderPath = MediaStore.Images.Media.DATA
-        var fileName = "comment.jpeg"
-
-        var folder = File(folderPath)
-        if (!folder.isDirectory) folder.mkdirs()
-
-        var out = FileOutputStream(folderPath + fileName)
-
-        imageBitmap.compress(Bitmap.CompressFormat.JPEG, 100, out) */
-    }
-
-    private val activityResult: ActivityResultLauncher<Intent> = registerForActivityResult( // 카메리 앱 실행 후 사진 저장하기
-        ActivityResultContracts.StartActivityForResult()) {
-        if(it.resultCode == RESULT_OK && it.data != null) {
-            // val extras = it.data!!.extras // 값 담기
-
-            val imageBitmap = it.data?.extras?.get("data") as? Bitmap
-            if (imageBitmap != null) {
-                saveImageToFile(imageBitmap)
-/*
-                val imageFileName = "MY_IMG_${System.currentTimeMillis()}.jpg"
-                val storageDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
-
-// 이미지 파일을 저장할 실제 파일 객체 생성
-                val imageFile = File(storageDir, imageFileName)
-
-// 이미지 파일의 Uri 생성
-                val imageUri =
-                    // Android N 이상 버전부터는 FileProvider를 사용하여 Uri를 생성해야 함
-                    FileProvider.getUriForFile(requireContext(), "com.example.android.fileprovider", imageFile)
-
-// 이미지 파일 저장
-                val outputStream: OutputStream? = requireContext().contentResolver.openOutputStream(imageUri)
-                imageBitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream)
-                outputStream?.close()
-
-// 갤러리 앱에서 새로 저장된 이미지를 인식할 수 있도록 갤러리 스캔
-                val mediaScanIntent = Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE)
-                mediaScanIntent.data = imageUri
-                requireContext().sendBroadcast(mediaScanIntent)
-
-*/
-            }
-            Toast.makeText(requireContext(), "저장 완료!", Toast.LENGTH_SHORT).show()
-        } else {
-            Toast.makeText(requireContext(), "저장 실패?", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -464,6 +450,7 @@ class GalleryFragment : Fragment() {
                                 builderModifyName.setTitle("앨범 이름 변경")
                                 val addAlbumView = layoutInflater.inflate(R.layout.gallery_add_album, null)
                                 builderModifyName.setView(addAlbumView)
+                                addAlbumView.findViewById<EditText>(R.id.gallery_make_new_album_TextView).setText(albumNames[selectedAlbumPosition]) // 입력란에 기존 앨범 이름을 미리 넣어놓기
 
                                 builderModifyName.setNegativeButton("취소") {dialog, _ -> dialog.dismiss()}
                                 builderModifyName.setPositiveButton("변경", null) // 입력한 이름을 검증한 후에, 앨범 이름을 변경한다
@@ -546,7 +533,7 @@ class GalleryFragment : Fragment() {
         popupMenu.show()
     }
 
-    // 6.1. 팝업 메뉴 중 정렬 기능을 위한 함수 (선택한 앨범에 대해서도 정렬 가능)
+    // 6-1. 팝업 메뉴 중 정렬 기능을 위한 함수 (선택한 앨범에 대해서도 정렬 가능)
     private fun changeGridViewOrder(position: Int, uriArr: ArrayList<String>, adapter: GridAdapter) {
         // orderList = ["이름 (가나다순)", "이름 (가나다 역순)", "날짜 (오름차순)", "날짜 (내림차순)"]
         when(position) {
@@ -581,7 +568,7 @@ class GalleryFragment : Fragment() {
         }
     }
 
-    // 7.1. json 파일 읽고 쓰기 관련 함수
+    // 7-1. json 파일 읽고 쓰기 관련 함수
     private fun copyAssetToFile(context: Context, fileName: String) {
         val file = File(context.filesDir, fileName)
         if (file.exists()) {
@@ -598,14 +585,14 @@ class GalleryFragment : Fragment() {
         outputStream.close()
     }
 
-    // 7.2. json 파일 읽고 쓰기 관련 함수
+    // 7-2. json 파일 읽고 쓰기 관련 함수
     private fun writeToFile(fileName: String, people: List<Album>) {
         val file = File(requireContext().filesDir, fileName)
         val json = gson.toJson(people)
         file.writeText(json)
     }
 
-    // 7.3. json 파일 읽고 쓰기 관련 함수
+    // 7-3. json 파일 읽고 쓰기 관련 함수
     private fun readFromFile(fileName: String): MutableList<Album> {
         val file = File(requireContext().filesDir, fileName)
         val json = file.readText()
@@ -629,10 +616,15 @@ class GalleryFragment : Fragment() {
 * - 앨범 삭제 기능
 * - 사진 삭제 기능 (전체 사진에서 삭제할 경우 저장소에서도 삭제되지만, 앨범에서 삭제할 경우 앨범에서만 삭제된다)
 *   -> (상위 버전에서는 현재 삭제 불가)
+*
 * - 앱 이름 및 아이콘 변경
+* - 앱 로딩 화면 생성
+* - 앨범 타이틀 폰트 적용
+* - 앱 기본 색상 변경 (보라색 -> 하늘색)
+*
 *
 * <해야 할 일>
-* - 카메라 촬영 후 저장소에 저장 구현 (실패)
+* - 카메라 촬영 후 저장소에 저장 구현 (저장은 되지만, 화질이 구리다.)
 *
 * 
 * <추가할 수 있는 기능>
