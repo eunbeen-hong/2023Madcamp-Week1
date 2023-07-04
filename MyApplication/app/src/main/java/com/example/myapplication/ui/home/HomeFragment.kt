@@ -30,14 +30,12 @@ data class Person(
     val imageUri: String?
 )
 
-
 // 검색 결과에 사용하는 data class
 data class PersonItem(
     val imageUri: String?,
     val name: String,
     val number: String
 )
-
 
 // 검색했을 때 나오는 Dialog 관리
 class PersonItemAdapter(context: Context, private val items: List<PersonItem>) :

@@ -1,0 +1,26 @@
+[
+  {
+    "title":  "my first trip to England",
+    "location":  "London",
+    "date":  "06/29/2023",
+    "imgList": [],
+    "contactList":  ["john", "mary", "bob", "chris", "sara", "jane", "jenny", "aiden", "doctor strange", "sara", "jane", "jenny", "aiden", "doctor strange"],
+    "note": "I want to go see the London Eye!!"
+  },
+  {
+    "title":  "my second trip to England",
+    "location":  "London",
+    "date":  "06/30/2023",
+    "imgList": [],
+    "contactList":  ["john", "mary", "bob", "chris", "sara", "jane", "jenny", "aiden", "doctor strange", "sara", "jane", "jenny", "aiden", "doctor strange"],
+    "note": "I want to try fish & chips!!"
+  },
+  {
+    "title":  "my third trip to England",
+    "location":  "London",
+    "date":  "07/01/2023",
+    "imgList": [],
+    "contactList":  ["john", "mary", "bob", "chris", "sara", "jane", "jenny", "aiden", "doctor strange", "sara", "jane", "jenny", "aiden", "doctor strange"],
+    "note": "I want to sleep..."
+  }
+]
