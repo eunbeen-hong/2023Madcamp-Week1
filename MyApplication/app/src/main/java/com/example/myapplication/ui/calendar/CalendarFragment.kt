@@ -42,6 +42,7 @@ class CalendarFragment : Fragment() {
         _binding = FragmentCalendarBinding.inflate(inflater, container, false)
         val root: View = binding.root
         val taskListView: ListView = binding.tasksList
+        val newTextTask: EditText = binding.newTask
 
         val fileName = "tasks.json"
         copyAssetsToFile(requireContext(), fileName)
@@ -56,15 +57,17 @@ class CalendarFragment : Fragment() {
 
         binding.selectedDate.text = selectedDate
 
+
+        /////////////////////////change complete status/////////////////////////
         taskAdapter.setOnCheckedChangeListener { task, isChecked ->
             task.completed = isChecked
-            Log.d("JSON File", "setOnCheckedChangeListener (cf)")
-            Log.d("JSON File", "userCollection; $userCollection")
             writeToFile(fileName, userCollection)
             sortedTasks = getDailyTasksSorted(userCollection, selectedDate)
             taskAdapter.updateData(sortedTasks)
         }
 
+
+        /////////////////////////remove task/////////////////////////
         taskAdapter.setOnItemRemovedListener { removedTask ->
             val selectedCollection = userCollection.find {it.date == selectedDate}
             selectedCollection?.let {collection ->
@@ -83,6 +86,7 @@ class CalendarFragment : Fragment() {
         }
 
 
+        /////////////////////////select date/////////////////////////
         binding.calendar.setOnDateChangeListener { _, year, month, dayOfMonth ->
             selectedDate = "${month + 1}/${dayOfMonth}/${year}"
             binding.selectedDate.text = selectedDate
@@ -90,19 +94,11 @@ class CalendarFragment : Fragment() {
             sortedTasks = getDailyTasksSorted(userCollection, selectedDate)
             taskAdapter.updateData(sortedTasks)
             taskAdapter.notifyDataSetChanged()
-            Log.d("JSON File", "setOnDateChangeListener")
-            Log.d("JSON File", "sortedTasks; $sortedTasks")
-//            writeToFile(fileName, userCollection)
-
             taskListView.visibility =
                 if (sortedTasks.isEmpty()) View.GONE else View.VISIBLE
         }
 
-
-        ///////////////////////add new task/////////////////////////
-
-        val newTextTask: EditText = binding.newTask
-
+        /////////////////////////add new task/////////////////////////
         newTextTask.setOnEditorActionListener { _, actionId, event ->
 
             if (actionId == EditorInfo.IME_ACTION_DONE || (event != null && event.keyCode == KeyEvent.KEYCODE_ENTER && event.action == KeyEvent.ACTION_DOWN)) {
@@ -123,12 +119,11 @@ class CalendarFragment : Fragment() {
                         userCollection.add(newCollection)
                     }
 
-                    Log.d("JSON File", "setOnEditorActionListener")
                     writeToFile(fileName, userCollection)
 
                     sortedTasks = getDailyTasksSorted(userCollection, selectedDate)
                     taskAdapter.updateData(sortedTasks)
-                    taskAdapter.notifyDataSetChanged()
+//                    taskAdapter.notifyDataSetChanged()
 
                     taskListView.visibility =
                         if (sortedTasks.isEmpty()) View.GONE else View.VISIBLE // TODO: sortedTasks 말고 내부 확인?
