@@ -5,16 +5,16 @@
     android:orientation="vertical"
     android:padding="16dp">
 
-    <EditText
-        android:id="@+id/searchEditText"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="Search" />
-
     <Spinner
         android:id="@+id/searchBySpinner"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:entries="@array/search_by_options" />
+
+    <EditText
+        android:id="@+id/searchEditText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Search" />
 
 </LinearLayout>
