@@ -19,6 +19,7 @@ import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
+import androidx.viewpager2.widget.ViewPager2
 import com.example.myapplication.R
 
 class PostAdapter(private val context: Context, private var posts: MutableList<Post>) : BaseAdapter() {
@@ -91,7 +92,7 @@ class PostAdapter(private val context: Context, private var posts: MutableList<P
         val imageList: LinearLayout = view.findViewById(R.id.imageList)
         val contactList: LinearLayout = view.findViewById(R.id.contactList)
         val note: TextView = view.findViewById(R.id.note)
-        val addPhotoButton: Button = view.findViewById(R.id.add_photo)
+//        val addPhotoButton: Button = view.findViewById(R.id.add_photo)
         val deleteButton: ImageButton = view.findViewById(R.id.deleteButton)
         val editButton: ImageButton = view.findViewById(R.id.editButton)
 
@@ -126,6 +127,9 @@ class PostAdapter(private val context: Context, private var posts: MutableList<P
             imageList.addView(imageView)
         }
 
+        val imageViewPager: ViewPager2 = view.findViewById(R.id.imageList)
+        imageViewPager.adapter = ImageAdapter(context, post.imgList)
+
         // FIXME
         /////////////////////contacts////////////////////////
         for (contact in post.contactList) {
@@ -153,9 +157,9 @@ class PostAdapter(private val context: Context, private var posts: MutableList<P
 
         // FIXME
         /////////////////////add photo////////////////////////
-        addPhotoButton.setOnClickListener {
-            addPhoto(post)
-        }
+//        addPhotoButton.setOnClickListener {
+//            addPhoto(post)
+//        }
 
         return view
     }
