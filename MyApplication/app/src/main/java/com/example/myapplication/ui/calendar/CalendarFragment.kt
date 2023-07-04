@@ -42,22 +42,27 @@ class CalendarFragment : Fragment() {
         _binding = FragmentCalendarBinding.inflate(inflater, container, false)
         val root: View = binding.root
         val taskListView: ListView = binding.tasksList
+
         val fileName = "tasks.json"
         copyAssetsToFile(requireContext(), fileName)
 
-        var userCollection: MutableList<Collection> = readFromFile(fileName)
         var selectedDate: String = getToday()
+        var userCollection: MutableList<Collection> = readFromFile(fileName)
         var sortedTasks: MutableList<Task> = getDailyTasksSorted(userCollection, selectedDate)
+
         val taskAdapter = TaskAdapter(sortedTasks, requireActivity())
         taskListView.adapter = taskAdapter
         taskListView.visibility = if (sortedTasks.isEmpty()) View.GONE else View.VISIBLE
 
+        binding.selectedDate.text = selectedDate
+
         taskAdapter.setOnCheckedChangeListener { task, isChecked ->
             task.completed = isChecked
+            Log.d("JSON File", "setOnCheckedChangeListener (cf)")
+            Log.d("JSON File", "userCollection; $userCollection")
             writeToFile(fileName, userCollection)
             sortedTasks = getDailyTasksSorted(userCollection, selectedDate)
             taskAdapter.updateData(sortedTasks)
-            taskAdapter.notifyDataSetChanged()
         }
 
         taskAdapter.setOnItemRemovedListener { removedTask ->
@@ -73,12 +78,10 @@ class CalendarFragment : Fragment() {
                     writeToFile(fileName, userCollection)
                     sortedTasks = getDailyTasksSorted(userCollection, selectedDate)
                     taskAdapter.updateData(sortedTasks)
-                    taskAdapter.notifyDataSetChanged()
                 }
             }
         }
 
-        binding.selectedDate.text = selectedDate
 
         binding.calendar.setOnDateChangeListener { _, year, month, dayOfMonth ->
             selectedDate = "${month + 1}/${dayOfMonth}/${year}"
@@ -89,7 +92,7 @@ class CalendarFragment : Fragment() {
             taskAdapter.notifyDataSetChanged()
             Log.d("JSON File", "setOnDateChangeListener")
             Log.d("JSON File", "sortedTasks; $sortedTasks")
-            writeToFile(fileName, userCollection)
+//            writeToFile(fileName, userCollection)
 
             taskListView.visibility =
                 if (sortedTasks.isEmpty()) View.GONE else View.VISIBLE
@@ -135,8 +138,8 @@ class CalendarFragment : Fragment() {
                 newTextTask.text.clear()
                 true
             } else {
-                Log.v("JSON File", "here?")
-                false
+//                false // false: 재입력시 입력칸 다시 클릭
+                true
             }
         }
 
