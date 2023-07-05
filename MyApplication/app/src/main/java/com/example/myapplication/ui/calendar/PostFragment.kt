@@ -226,8 +226,14 @@ class PostFragment : Fragment() {
                     ViewGroup.LayoutParams.MATCH_PARENT
                 ) // Replace with the size you want.
 
+                val scale = resources.displayMetrics.density
+                val sizeInDp = 50
+                val sizeInPx = (sizeInDp * scale + 0.5f).toInt()
+
                 Glide.with(this@PostFragment)
                     .load(Uri.parse(person.imageUri))
+                    .override(sizeInPx, sizeInPx)
+                    .fitCenter() // apply fit center
                     .into(imageView)
 
                 contactListLayout.addView(imageView)
