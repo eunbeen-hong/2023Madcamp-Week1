@@ -3,13 +3,10 @@
 ## Developers
 
 - [정지우](https://github.com/jiwoojeong17)
-  - Description: A passionate developer with expertise in front-end development and UI design.
   
 - [홍은빈](https://github.com/pancakesontuesday)
-  - Description: An experienced full-stack developer proficient in back-end development and database management.
   
 - [김서현](https://github.com/frica12)
-  - Description: A skilled mobile app developer specializing in Android development and API integration.
 
 ## Introduction
 
