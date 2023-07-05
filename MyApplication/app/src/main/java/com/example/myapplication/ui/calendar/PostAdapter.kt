@@ -159,7 +159,7 @@ class PostAdapter(private val context: Context, private var posts: MutableList<P
                     LinearLayout.LayoutParams.MATCH_PARENT
                 )
                 contactView.layoutParams = layoutParams
-                contactImageButton.scaleType = ImageView.ScaleType.CENTER
+                contactImageButton.scaleType = ImageView.ScaleType.CENTER_CROP
 
                 // If contact is in the form of Uri String, parse it and load the image
                 if (uri != null) {

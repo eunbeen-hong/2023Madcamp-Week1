@@ -5,6 +5,7 @@ import android.content.ActivityNotFoundException
 import android.app.AlertDialog
 import android.content.Context
 import android.content.Intent
+import android.content.res.Resources
 import android.net.Uri
 import android.os.Bundle
 import android.util.Log
@@ -12,6 +13,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.*
+import androidx.cardview.widget.CardView
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -201,6 +203,9 @@ class PostFragment : Fragment() {
         }
     }
 
+    val Int.dp: Int
+        get() = (this * Resources.getSystem().displayMetrics.density + 0.5f).toInt()
+
     private fun showContactsDialog(people: MutableList<Person>, selectedPeople: MutableList<Person>, contactListLayout: LinearLayout) {
         val builder = AlertDialog.Builder(requireContext())
         val view = layoutInflater.inflate(R.layout.dialog_contacts, null)
@@ -213,26 +218,37 @@ class PostFragment : Fragment() {
             selectedPeople.add(person)
             Toast.makeText(requireContext(), "${person.name} selected", Toast.LENGTH_SHORT).show()
 
-            // TODO: when selected, change color or sth
-
-            // Load the image using Glide
             if (!person.imageUri.isNullOrEmpty()) {
-                // Create a new ImageView and load the selected contact's profile image into it.
-//                val contactItem = layoutInflater.inflate(R.layout.contact_item, null)
-//                val imageView = contactItem.findViewById<ImageButton>(R.id.contactImage)
-                val imageView = ImageView(requireContext())
-                imageView.layoutParams = ViewGroup.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.MATCH_PARENT
-                ) // Replace with the size you want.
+                // Create a new CardView
+                val cardView = CardView(requireContext()).apply {
+                    layoutParams = ViewGroup.LayoutParams(50.dp, 50.dp) // replace 50.dp with your desired dp size
+                    radius = 70f // half of the size to make a circle
+                    useCompatPadding = true
+                    preventCornerOverlap = false
+                    cardElevation = 12f
+                }
 
+                // Create a new ImageView and add it to CardView
+                val imageView = ImageView(requireContext()).apply {
+                    layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
+                    scaleType = ImageView.ScaleType.CENTER_CROP
+                }
+
+                cardView.addView(imageView)
+
+                // Load the image into ImageView using Glide
                 Glide.with(this@PostFragment)
                     .load(Uri.parse(person.imageUri))
+                    .override(50.dp, 50.dp) // replace 50.dp with your desired dp size
+                    .centerCrop() // apply circle crop
                     .into(imageView)
 
-                contactListLayout.addView(imageView)
+                // Add the CardView to contactListLayout
+                contactListLayout.addView(cardView)
             }
         }
+
+
 
         listView.adapter = adapter
 
