@@ -15,7 +15,7 @@
 
 ![Splash](https://github.com/2023MadCamp-Week1/Week1_App/assets/39610886/b81206ed-5d00-4cdf-8358-6d9f8a57fc13)
 
-## 기능 (Function)
+## 기능 (Features)
 
 - 연락처: 여행에서 만난 소중한 인연들을 기억해요!
   - 연락처를 추가, 삭제, 수정할 수 있습니다.
