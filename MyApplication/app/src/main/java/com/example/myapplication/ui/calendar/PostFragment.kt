@@ -30,11 +30,11 @@ import com.example.myapplication.ui.home.Person
 import com.example.myapplication.ui.home.HomeFragment.PersonAdapter
 
 class Post(
-    val title: String,
-    val location: String,
-    val date: String,
+    var title: String,
+    var location: String,
+    var date: String,
     var imgList: MutableList<String>,
-    val note: String,
+    var note: String,
     var contactList: MutableList<Person>
 )
 //    var contactList: MutableList<String>,
@@ -191,10 +191,6 @@ class PostFragment : Fragment() {
                 selectedUris.add(uri.toString())
             }
 
-//            currentPost?.let { postToUpdate ->
-//                postToUpdate.imgList.addAll(selectedUris)
-//                postAdapter.notifyDataSetChanged()
-//            }
             currentPost?.let { currentPost ->
                 currentPost.imgList.addAll(selectedUris)
                 writeToFile("posts.json", getPostSorted(postList))
@@ -261,7 +257,7 @@ class PostFragment : Fragment() {
     // TODO: 홍은빈
     // date 형식 강제로 통일하게?
     // new post: add 버튼 색깔
-    // new post 에서 이미지 추가 안됨
+    // 넣은 사진/사람 삭제
     // edit post에서 연락처 추가 안됨
     // 한 post의 person 중복 등록 안되게?
     // edit/new post dialog에서 image/contact 추가 시 아래에 뜨도록
@@ -281,13 +277,30 @@ class PostFragment : Fragment() {
         val dialog = builder.create()
 
         val selectedPeople = mutableListOf<Person>()
-
         val contactListLayout = view.findViewById<LinearLayout>(R.id.contactList2)
         val addImageButton: ImageButton = view.findViewById(R.id.photo_addbutton)
         val addContactButton = view.findViewById<ImageButton>(R.id.contact_addbutton)
 
+        var newPost = Post(
+            "",
+            "",
+            "",
+            mutableListOf(),
+            "",
+            mutableListOf()
+        )
+
+        currentPost = newPost
+
         addImageButton.setOnClickListener {
-            // TODO
+            val galleryIntent = Intent(Intent.ACTION_GET_CONTENT)
+            galleryIntent.type = "image/*"
+            galleryIntent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true)
+            try {
+                startActivityForResult(galleryIntent, REQUEST_CODE_GALLERY)
+            } catch (e: ActivityNotFoundException) {
+                // Handle the case when no gallery app is available
+            }
         }
         addContactButton.setOnClickListener {
             showContactsDialog(people, selectedPeople, contactListLayout)
@@ -296,33 +309,22 @@ class PostFragment : Fragment() {
         dialog.setOnShowListener {
             val positiveButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE)
             positiveButton.setOnClickListener {
-                val title = view.findViewById<EditText>(R.id.new_title).text.toString().let {
-                    it.ifBlank { "none" }
+                newPost.title = view.findViewById<EditText>(R.id.new_title).text.toString().let {
+                    it.ifBlank { "제목을 입력하세요" }
                 }
-                val date = view.findViewById<EditText>(R.id.new_date).text.toString().let {
-                    it.ifBlank { "none" }
+                newPost.date = view.findViewById<EditText>(R.id.new_date).text.toString().let {
+                    it.ifBlank { "날짜를 입력하세요" }
                 }
-                val location = view.findViewById<EditText>(R.id.new_location).text.toString().let {
-                    it.ifBlank { "none" }
+                newPost.location = view.findViewById<EditText>(R.id.new_location).text.toString().let {
+                    it.ifBlank { "장소를 입력하세요" }
                 }
-                val note = view.findViewById<EditText>(R.id.new_note).text.toString().let {
-                    it.ifBlank { "none" }
+                newPost.note = view.findViewById<EditText>(R.id.new_note).text.toString().let {
+                    it.ifBlank { "추억을 기록하세요" }
                 }
 
-//                val contacts = selectedPeople.map { it.number }
-//                val contactImages = selectedPeople.mapNotNull { it.imageUri } // get the image URIs
+                newPost.contactList = selectedPeople
 
-                val newPost = Post(
-                    title,
-                    location,
-                    date,
-                    mutableListOf(),
-                    note,
-                    selectedPeople
-                )
-//                    contacts.toMutableList(),
-//                    contactImages.toMutableList()
-
+                currentPost = newPost
                 postList = readFromFile(fileName, object : TypeToken<MutableList<Post>>() {})
                 postList.add(newPost)
                 writeToFile(fileName, postList)

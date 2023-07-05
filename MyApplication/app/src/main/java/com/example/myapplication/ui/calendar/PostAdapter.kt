@@ -126,10 +126,6 @@ class PostAdapter(private val context: Context, private var posts: MutableList<P
         date.text = SpannableStringBuilder(post.date); date.tag = "date"
         note.text = post.note; note.tag = "note"
 
-        val imageCount = post.imgList.size
-
-//        imageList.removeAllViews()
-
         /////////////////////delete post////////////////////////
         deleteButton.setOnClickListener {
             confirmDelete(post)
@@ -144,7 +140,6 @@ class PostAdapter(private val context: Context, private var posts: MutableList<P
         imageViewPager.adapter = ImageAdapter(context, post.imgList)
         indicator.setViewPager(imageViewPager)
 
-        // FIXME
         /////////////////////contacts////////////////////////
         if (post.contactList != null) {
             contactList.removeAllViews()
@@ -212,8 +207,6 @@ class PostAdapter(private val context: Context, private var posts: MutableList<P
         dialog.setOnShowListener {
             val positiveButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE)
             positiveButton.setOnClickListener {
-
-
                 val title = view.findViewById<EditText>(R.id.edit_title).text.toString()
                 val date = view.findViewById<EditText>(R.id.edit_date).text.toString()
                 val location = view.findViewById<EditText>(R.id.edit_location).text.toString()
