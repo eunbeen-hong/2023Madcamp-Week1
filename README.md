@@ -13,6 +13,8 @@
 트래블로그는 여행을 계획하고 추억을 기록할 수 있는 어플입니다.   
 여행 멤버들의 연락처와 사진을 저장하고 여행의 기억을 기록하면서 소중한 추억을 간직하세요!
 
+![Splash](https://github.com/2023MadCamp-Week1/Week1_App/assets/39610886/b81206ed-5d00-4cdf-8358-6d9f8a57fc13)
+
 ## 기능 (Function)
 
 - 연락처: 여행에서 만난 소중한 인연들을 기억해요!
@@ -21,6 +23,9 @@
     - 사용자의 전화번호, 인스타그램, Github을 선택하면 해당 앱이 실행됩니다.
   - 연락처를 검색할 수 있습니다.
     - 이름 또는 전화번호로 사용자를 검색할 수 있습니다.
+    - 
+![Tab1_contacts](https://github.com/2023MadCamp-Week1/Week1_App/assets/39610886/94954e97-f412-4994-a261-1cd7c7f7cf1d)
+![Tab1_contactdetails](https://github.com/2023MadCamp-Week1/Week1_App/assets/39610886/aa4c05f5-8eb0-426b-a809-0f1d56108721)
   
 - 갤러리: 여행 사진을 촬영하고 저장해요!
   - 사용자 디바이스에 저장된 사진을 보여줍니다.
@@ -34,6 +39,8 @@
     - 정렬 기능을 사용하여 사진을 이름 또는 날짜의 오름차순/내림차순으로 정렬합니다.
   - 카메라로 사진을 촬영합니다.
     - 카메라 앱을 실행하여 사진을 촬영하고 디바이스에 저장합니다.
+    - 
+![Tab2_gallery](https://github.com/2023MadCamp-Week1/Week1_App/assets/39610886/bb6ed828-975f-41c9-98dd-e42b5e3465cc)
 
 - 블로그: 여행 계획을 세우고 추억을 기록해요!
   - 여행 계획과 추억을 사진과 멤버와 함께 기록합니다.
@@ -42,15 +49,6 @@
     - 게시물을 추가, 삭제, 수정할 수 있습니다.
     - 게시물에 태그된 멤버를 선택하면 연락처가 뜨면서 곧바로 연락할 수 있습니다.
 
-## 시연 스크린샷 (Demo Screenshots)
-
-Tab1 - 연락처
-Tab2 - 갤러리 / 카메라
-Tab3 - 블로그
-
-![Splash](https://github.com/2023MadCamp-Week1/Week1_App/assets/39610886/b81206ed-5d00-4cdf-8358-6d9f8a57fc13)
-![Tab1_contacts](https://github.com/2023MadCamp-Week1/Week1_App/assets/39610886/94954e97-f412-4994-a261-1cd7c7f7cf1d)
-![Tab1_contactdetails](https://github.com/2023MadCamp-Week1/Week1_App/assets/39610886/aa4c05f5-8eb0-426b-a809-0f1d56108721)
-![Tab2_gallery](https://github.com/2023MadCamp-Week1/Week1_App/assets/39610886/bb6ed828-975f-41c9-98dd-e42b5e3465cc)
 ![Tab3_main](https://github.com/2023MadCamp-Week1/Week1_App/assets/39610886/272a82f7-0d4a-478e-bfe5-e2a21cc9e2f1)
 ![Tab3_newpost](https://github.com/2023MadCamp-Week1/Week1_App/assets/39610886/db68181d-78ff-43cf-8eea-f472b7a4849a)
+
