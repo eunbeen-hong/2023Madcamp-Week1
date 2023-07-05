@@ -46,8 +46,6 @@ class GalleryFragment : Fragment() {
     private val binding get() = _binding!!
     private val gson = Gson()
     private var currentAlbumIndex = -1 // 현재 그리드뷰로 보여지는 앨범이 albums에서 몇 번째 index인지를 나타낸다. (-1은 "전체 사진"을 가리킨다)
-    private lateinit var uriArrForCameraApp: ArrayList<String>
-    private lateinit var adapterForCameraApp: GridAdapter
 
     override fun onCreateView(
             inflater: LayoutInflater,
@@ -66,15 +64,13 @@ class GalleryFragment : Fragment() {
         val uriArr = getAllPhotos()
         val gridViewAdapter = GridAdapter(requireContext(), uriArr) // 사진 목록을 adapter에 전달한 후,
         gridView.adapter =  gridViewAdapter                         // adapter를 gridView에 연결한다.
-        adapterForCameraApp = gridViewAdapter
 
         gridView.onItemClickListener = AdapterView.OnItemClickListener { _, _, position, _ -> // 사진 하나를 클릭하면 실행된다.
             showImagePopup(requireContext(), uriArr, position, gridViewAdapter)
         }
 
         cameraButton.setOnClickListener { // 버튼을 누르면 카메라 앱을 실행한다.
-            Toast.makeText(requireContext(), "카메라 실행", Toast.LENGTH_SHORT).show()
-            uriArrForCameraApp = uriArr
+            // Toast.makeText(requireContext(), "카메라 실행", Toast.LENGTH_SHORT).show()
             executeCameraApp()
         }
 
@@ -302,12 +298,9 @@ class GalleryFragment : Fragment() {
                 if (imageBitmap != null) {
                     saveImageOnUnderAndroidQ(imageBitmap)
                 }
-                uriArrForCameraApp.clear()
-                uriArrForCameraApp.addAll(getAllPhotos())
-                adapterForCameraApp.notifyDataSetChanged()
                 Toast.makeText(requireContext(), "저장 완료", Toast.LENGTH_SHORT).show()
             } else {
-                Toast.makeText(requireContext(), "저장 취소", Toast.LENGTH_SHORT).show()
+                // Toast.makeText(requireContext(), "저장 취소", Toast.LENGTH_SHORT).show()
             }
         }
 
@@ -396,7 +389,7 @@ class GalleryFragment : Fragment() {
                         adapter.notifyDataSetChanged()
                         albumTitle.text = albumNames[selectedAlbumPosition] // 상단의 앨범 이름을 표시하는 TextView에도 반영
                         currentAlbumIndex = selectedAlbumPosition-1
-                        Toast.makeText(context, "앨범 선택 완료", Toast.LENGTH_SHORT).show()
+                        // Toast.makeText(context, "앨범 선택 완료", Toast.LENGTH_SHORT).show()
                     }
 
                     builderAlbum.setNeutralButton("앨범 삭제", null)
@@ -472,7 +465,7 @@ class GalleryFragment : Fragment() {
                                             albums.removeAt(selectedAlbumPosition-1)
                                             albums.add(selectedAlbumPosition-1, newAlbum)
                                             writeToFile(albumFile, albums)
-                                            Toast.makeText(context, "앨범 이름 변경 성공", Toast.LENGTH_SHORT).show()
+                                            Toast.makeText(context, "변경 완료", Toast.LENGTH_SHORT).show()
                                             dialog.dismiss()
                                         }
                                     }
@@ -542,28 +535,28 @@ class GalleryFragment : Fragment() {
                 uriArr.clear()
                 uriArr.addAll(orderedUriArr)
                 adapter.notifyDataSetChanged()
-                Toast.makeText(requireContext(), "이름 가나다순 정렬", Toast.LENGTH_SHORT).show()
+                // Toast.makeText(requireContext(), "이름 가나다순 정렬", Toast.LENGTH_SHORT).show()
             }
             1 -> {
                 val orderedUriArr = getAllPhotos(MediaStore.Images.ImageColumns.DISPLAY_NAME + " DESC", uriArr)
                 uriArr.clear()
                 uriArr.addAll(orderedUriArr)
                 adapter.notifyDataSetChanged()
-                Toast.makeText(requireContext(), "이름 역순 정렬", Toast.LENGTH_SHORT).show()
+                // Toast.makeText(requireContext(), "이름 역순 정렬", Toast.LENGTH_SHORT).show()
             }
             2 -> {
                 val orderedUriArr = getAllPhotos(MediaStore.Images.ImageColumns.DATE_TAKEN + " ASC", uriArr)
                 uriArr.clear()
                 uriArr.addAll(orderedUriArr)
                 adapter.notifyDataSetChanged()
-                Toast.makeText(requireContext(), "날짜 오름차순 정렬", Toast.LENGTH_SHORT).show()
+                // Toast.makeText(requireContext(), "날짜 오름차순 정렬", Toast.LENGTH_SHORT).show()
             }
             3 -> {
                 val orderedUriArr = getAllPhotos(MediaStore.Images.ImageColumns.DATE_TAKEN + " DESC", uriArr)
                 uriArr.clear()
                 uriArr.addAll(orderedUriArr)
                 adapter.notifyDataSetChanged()
-                Toast.makeText(requireContext(), "날짜 내림차순 정렬", Toast.LENGTH_SHORT).show()
+                // Toast.makeText(requireContext(), "날짜 내림차순 정렬", Toast.LENGTH_SHORT).show()
             }
         }
     }

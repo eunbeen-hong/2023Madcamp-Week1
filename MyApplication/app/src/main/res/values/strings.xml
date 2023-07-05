@@ -1,8 +1,8 @@
 <resources>
-    <string name="app_name">트래블래너</string>
+    <string name="app_name">트래블로그</string>
     <string name="title_home">연락처</string>
     <string name="title_gallery">갤러리</string>
-    <string name="title_post">플래너</string>
+    <string name="title_calendar">블로그</string>
     <string name="init_date_select">Select a Date</string>
     <string name="add_task_hint">Write a new task</string>
     <string name="write">write something here</string>
