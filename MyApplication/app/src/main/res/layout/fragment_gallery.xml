@@ -19,18 +19,17 @@
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/galleryCameraAppFloatingButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
         android:contentDescription="@string/gallery_camera"
         android:scaleType="fitCenter"
         android:src="@android:drawable/ic_menu_camera"
+        android:layout_width="56dp"
+        android:layout_height="56dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="16dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.92"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.95"
-        app:rippleColor="@color/black" />
+        app:rippleColor="@color/black"
+        app:backgroundTint="@android:color/darker_gray" />
 <!--
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/galleryOrderFloatingButton"
