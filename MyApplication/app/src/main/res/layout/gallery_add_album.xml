@@ -9,6 +9,7 @@
         android:id="@+id/gallery_make_new_album_TextView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:fontFamily="@font/nanumsquareround_otfeb"
         android:layout_weight="1"
         android:hint="앨범 이름"
         android:paddingStart="8dp" />

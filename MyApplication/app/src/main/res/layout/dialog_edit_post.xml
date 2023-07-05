@@ -17,6 +17,7 @@
             android:layout_height="50dp"
             android:background="#00FFFFFF"
             android:hint="제목"
+            android:fontFamily="@font/nanumsquareround_otfeb"
             android:paddingStart="8dp"/>
     </com.google.android.material.textfield.TextInputLayout>
 
@@ -31,6 +32,7 @@
             android:layout_height="wrap_content"
             android:background="#00FFFFFF"
             android:hint="날짜"
+            android:fontFamily="@font/nanumsquareround_otfeb"
             android:paddingStart="8dp"/>
     </com.google.android.material.textfield.TextInputLayout>
 
@@ -45,6 +47,7 @@
             android:layout_height="50dp"
             android:background="#00FFFFFF"
             android:hint="장소"
+            android:fontFamily="@font/nanumsquareround_otfeb"
             android:paddingStart="8dp"/>
     </com.google.android.material.textfield.TextInputLayout>
 
@@ -64,6 +67,7 @@
             android:gravity="center_vertical"
             android:paddingStart="8dp"
             android:text="사진"
+            android:fontFamily="@font/nanumsquareround_otfeb"
             android:textSize="16sp" />
 
         <ImageButton
@@ -94,6 +98,7 @@
             android:gravity="center_vertical"
             android:paddingStart="8dp"
             android:text="멤버"
+            android:fontFamily="@font/nanumsquareround_otfeb"
             android:textSize="16sp" />
 
         <ImageButton
@@ -120,7 +125,7 @@
 
         <LinearLayout
             android:id="@+id/contactList2"
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="match_parent"
             android:fontFamily="@font/nanumsquareround_otfeb"
             android:orientation="horizontal"
@@ -137,6 +142,7 @@
             android:layout_height="50dp"
             android:background="#00FFFFFF"
             android:hint="내용"
+            android:fontFamily="@font/nanumsquareround_otfeb"
             android:paddingStart="8dp" />
     </com.google.android.material.textfield.TextInputLayout>
 

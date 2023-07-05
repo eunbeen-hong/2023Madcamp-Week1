@@ -26,7 +26,8 @@
             android:layout_height="40dp"
             android:layout_alignParentTop="true"
             android:layout_alignParentEnd="true"
-            android:text="x" />
+            android:text="x"
+            android:fontFamily="@font/nanumsquareround_otfeb" />
 
     </RelativeLayout>
 
@@ -43,6 +44,7 @@
             android:layout_width="180dp"
             android:layout_height="40dp"
             android:text="기본 이미지로 변경"
+            android:fontFamily="@font/nanumsquareround_otfeb"
             android:layout_centerInParent="true" />
 
     </LinearLayout>
@@ -60,12 +62,13 @@
         <ImageView
             android:layout_width="24dp"
             android:layout_height="24dp"
-            android:src="@drawable/ic_name" />
+            android:src="@drawable/profile_icon" />
 
         <TextView
             android:id="@+id/nameTextView"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:fontFamily="@font/nanumsquareround_otfeb"
             android:layout_weight="1"
             android:textAppearance="?android:textAppearanceMedium"
             android:paddingStart="8dp" />
@@ -89,6 +92,7 @@
             android:id="@+id/numberTextView"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:fontFamily="@font/nanumsquareround_otfeb"
             android:layout_weight="1"
             android:textAppearance="?android:textAppearanceMedium"
             android:paddingStart="8dp"
@@ -114,6 +118,7 @@
             android:id="@+id/emailTextView"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:fontFamily="@font/nanumsquareround_otfeb"
             android:layout_weight="1"
             android:textAppearance="?android:textAppearanceMedium"
             android:paddingStart="8dp" />
@@ -137,6 +142,7 @@
             android:id="@+id/instagramTextView"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:fontFamily="@font/nanumsquareround_otfeb"
             android:layout_weight="1"
             android:textAppearance="?android:textAppearanceMedium"
             android:paddingStart="8dp"
@@ -162,6 +168,7 @@
             android:id="@+id/githubTextView"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:fontFamily="@font/nanumsquareround_otfeb"
             android:layout_weight="1"
             android:textAppearance="?android:textAppearanceMedium"
             android:paddingStart="8dp"

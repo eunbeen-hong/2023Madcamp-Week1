@@ -21,7 +21,7 @@
         android:src="@drawable/ic_add"
         android:layout_marginBottom="146dp"
         android:layout_marginRight="16dp"
-        app:backgroundTint="@android:color/darker_gray" />
+        app:backgroundTint="@color/green_light" />
 
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
@@ -35,7 +35,7 @@
         android:src="@drawable/ic_search"
         android:layout_marginBottom="78dp"
         android:layout_marginRight="16dp"
-        app:backgroundTint="@android:color/darker_gray" />
+        app:backgroundTint="@color/green_light" />
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fab"

@@ -4,16 +4,19 @@
     <item
         android:id="@+id/navigation_home"
         android:icon="@drawable/contacts"
+        android:fontFamily="@font/nanumsquareround_otfeb"
         android:title="@string/title_home" />
 
     <item
         android:id="@+id/navigation_gallery"
         android:icon="@drawable/gallery"
+        android:fontFamily="@font/nanumsquareround_otfeb"
         android:title="@string/title_gallery" />
 
     <item
         android:id="@+id/navigation_post"
         android:icon="@drawable/pen"
+        android:fontFamily="@font/nanumsquareround_otfeb"
         android:title="@string/title_post" />
 
 </menu>

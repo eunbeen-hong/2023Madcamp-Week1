@@ -9,12 +9,14 @@
         android:id="@+id/searchBySpinner"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:entries="@array/search_by_options" />
+        android:entries="@array/search_by_options"
+        android:fontFamily="@font/nanumsquareround_otfeb" />
 
     <EditText
         android:id="@+id/searchEditText"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Search" />
+        android:hint="검색"
+        android:fontFamily="@font/nanumsquareround_otfeb" />
 
 </LinearLayout>

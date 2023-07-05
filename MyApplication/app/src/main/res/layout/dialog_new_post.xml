@@ -16,6 +16,7 @@
             android:layout_width="match_parent"
             android:layout_height="50dp"
             android:background="#00FFFFFF"
+            android:fontFamily="@font/nanumsquareround_otfeb"
             android:hint="제목"
             android:paddingStart="8dp"/>
     </com.google.android.material.textfield.TextInputLayout>
@@ -29,6 +30,7 @@
             android:id="@+id/new_date"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:fontFamily="@font/nanumsquareround_otfeb"
             android:background="#00FFFFFF"
             android:hint="날짜"
             android:paddingStart="8dp"/>
@@ -43,6 +45,7 @@
             android:id="@+id/new_location"
             android:layout_width="match_parent"
             android:layout_height="50dp"
+            android:fontFamily="@font/nanumsquareround_otfeb"
             android:background="#00FFFFFF"
             android:hint="장소"
             android:paddingStart="8dp"/>
@@ -61,6 +64,7 @@
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="8"
+            android:fontFamily="@font/nanumsquareround_otfeb"
             android:gravity="center_vertical"
             android:paddingStart="8dp"
             android:text="사진"
@@ -71,6 +75,7 @@
             android:layout_width="0dp"
             android:layout_height="25dp"
             android:layout_weight="1"
+            android:fontFamily="@font/nanumsquareround_otfeb"
             android:background="#00FFFFFF"
             android:scaleType="centerInside"
             android:src="@drawable/ic_add" />
@@ -90,6 +95,7 @@
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="8"
+            android:fontFamily="@font/nanumsquareround_otfeb"
             android:gravity="center_vertical"
             android:paddingStart="8dp"
             android:text="멤버"
@@ -100,6 +106,7 @@
             android:layout_width="0dp"
             android:layout_height="25dp"
             android:layout_weight="1"
+            android:fontFamily="@font/nanumsquareround_otfeb"
             android:background="#00FFFFFF"
             android:scaleType="centerInside"
             android:src="@drawable/ic_add" />
@@ -134,6 +141,7 @@
             android:id="@+id/new_note"
             android:layout_width="match_parent"
             android:layout_height="50dp"
+            android:fontFamily="@font/nanumsquareround_otfeb"
             android:background="#00FFFFFF"
             android:hint="내용"
             android:paddingStart="8dp" />

@@ -76,9 +76,7 @@ class PostFragment : Fragment() {
 
         /////////////////////new post////////////////////////
         binding.newPost.setOnClickListener {
-            binding.newPost.setOnClickListener {
-                showNewPostDialog(fileName, postAdapter, people)
-            }
+            showNewPostDialog(fileName, postAdapter, people)
         }
 
         /////////////////////delete post////////////////////////
@@ -156,7 +154,7 @@ class PostFragment : Fragment() {
                 Log.d("my_log", "date format error: $e")
                 null
             }
-        }.toMutableList()
+        }.reversed().toMutableList()
     }
 
     private fun writeToFile(fileName: String, data: MutableList<Post>) {
@@ -197,7 +195,7 @@ class PostFragment : Fragment() {
         }
     }
 
-    val Int.dp: Int
+    private val Int.dp: Int
         get() = (this * Resources.getSystem().displayMetrics.density + 0.5f).toInt()
 
     private fun showContactsDialog(people: MutableList<Person>, selectedPeople: MutableList<Person>, contactListLayout: LinearLayout) {
@@ -239,6 +237,28 @@ class PostFragment : Fragment() {
 
                 // Add the CardView to contactListLayout
                 contactListLayout.addView(cardView)
+            } else {
+                // Create a new CardView
+                val cardView = CardView(contactListLayout.context).apply {
+                    layoutParams = ViewGroup.LayoutParams(50.dp, 50.dp) // replace 50.dp with your desired dp size
+                    radius = 70f // half of the size to make a circle
+                    useCompatPadding = true
+                    preventCornerOverlap = false
+                    cardElevation = 12f
+                }
+
+                // Create a new ImageView and add it to CardView
+                val imageView = ImageView(contactListLayout.context).apply {
+                    layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
+                    scaleType = ImageView.ScaleType.CENTER_CROP
+                }
+
+                cardView.addView(imageView)
+
+                imageView.setImageResource(R.drawable.ic_name)
+
+                // Add the CardView to contactListLayout
+                contactListLayout.addView(cardView)
             }
 
             currentPost?.let { currentPost ->
@@ -249,25 +269,12 @@ class PostFragment : Fragment() {
 
         }
 
-
-
         listView.adapter = adapter
 
         builder.setView(view)
         builder.setPositiveButton("선택 완료", null) // 추가
         builder.create().show()
     }
-
-
-    // TODO: 홍은빈
-    // date 형식 강제로 통일하게?
-    // new post: add 버튼 색깔
-    // 넣은 사진/사람 삭제
-    // edit post에서 연락처 추가 안됨
-    // 한 post의 person 중복 등록 안되게?
-    // edit/new post dialog에서 image/contact 추가 시 아래에 뜨도록
-    // 현재 post의 person과 contact의 person이 연동이 안됨 -> contact의 정보가 바뀌어도 post로 가지 않는다
-    // -> post에서 연락처 보여줄 때 contact 파일에 접근해야? 고유한 값이 있어야함 -> 핸드폰 번호?
 
     private fun showNewPostDialog(fileName: String, postAdapter: PostAdapter, people: MutableList<Person>) {
         val builder = AlertDialog.Builder(requireContext())

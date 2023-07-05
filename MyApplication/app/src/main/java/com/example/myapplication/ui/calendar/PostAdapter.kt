@@ -117,7 +117,6 @@ class PostAdapter(private val context: Context, private var posts: MutableList<P
         val indicator: CircleIndicator = view.findViewById(R.id.indicator)
         val contactList: LinearLayout = view.findViewById(R.id.contactList)
         val note: TextView = view.findViewById(R.id.note)
-        val addPhotoButton: Button = view.findViewById(R.id.add_photo)
         val deleteButton: ImageButton = view.findViewById(R.id.deleteButton)
         val editButton: ImageButton = view.findViewById(R.id.editButton)
 
@@ -160,6 +159,9 @@ class PostAdapter(private val context: Context, private var posts: MutableList<P
                 if (uri != null) {
                     LoadImageTask(contactImageButton).execute(Uri.parse(uri))
                 }
+                else {
+                    contactImageButton.setImageResource(R.drawable.ic_name)
+                }
 
                 contactList.addView(contactView)
 
@@ -167,11 +169,6 @@ class PostAdapter(private val context: Context, private var posts: MutableList<P
                     onContactDetailListener ?.invoke(person)
                 }
             }
-        }
-
-        /////////////////////add photo////////////////////////
-        addPhotoButton.setOnClickListener {
-            onAddPhotoListener ?.invoke(post)
         }
 
         return view
