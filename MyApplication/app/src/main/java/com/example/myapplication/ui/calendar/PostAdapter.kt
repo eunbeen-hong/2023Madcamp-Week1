@@ -5,24 +5,20 @@ import android.graphics.Bitmap
 import android.app.AlertDialog
 import android.net.Uri
 import android.text.SpannableStringBuilder
-import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.view.inputmethod.EditorInfo
 import android.widget.BaseAdapter
-import android.widget.Button
 import android.widget.EditText
 import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
-import android.widget.Toast
 import com.example.myapplication.R
 import android.graphics.BitmapFactory
 import android.os.AsyncTask
+import android.widget.Button
 import androidx.viewpager.widget.ViewPager
-import androidx.viewpager2.widget.ViewPager2
 import com.example.myapplication.ui.home.Person
 import me.relex.circleindicator.CircleIndicator
 import java.io.InputStream
@@ -52,7 +48,7 @@ class PostAdapter(private val context: Context, private var posts: MutableList<P
     private var onAddPhotoListener : ((Post) -> Unit)? = null
     private var onDeletePostListener : ((Post) -> Unit)? = null
     private var onContactDetailListener: ((Person) -> Unit)? = null
-    private var onAddContactListener: ((Post) -> Unit)? = null
+    private var onAddContactListener: ((LinearLayout, Post) -> Unit)? = null
 
     fun setOnDeletePostListener(listener: (Post) -> Unit) {
         onDeletePostListener = listener
@@ -70,7 +66,7 @@ class PostAdapter(private val context: Context, private var posts: MutableList<P
         onAddPhotoListener = listener
     }
 
-    fun setOnAddContactListener (listener: (Post) -> Unit) {
+    fun setOnAddContactListener (listener: (LinearLayout, Post) -> Unit) {
         onAddContactListener = listener
     }
 
@@ -130,10 +126,6 @@ class PostAdapter(private val context: Context, private var posts: MutableList<P
         date.text = SpannableStringBuilder(post.date); date.tag = "date"
         note.text = post.note; note.tag = "note"
 
-        val imageCount = post.imgList.size
-
-//        imageList.removeAllViews()
-
         /////////////////////delete post////////////////////////
         deleteButton.setOnClickListener {
             confirmDelete(post)
@@ -162,7 +154,7 @@ class PostAdapter(private val context: Context, private var posts: MutableList<P
                     LinearLayout.LayoutParams.MATCH_PARENT
                 )
                 contactView.layoutParams = layoutParams
-                contactImageButton.scaleType = ImageView.ScaleType.CENTER
+                contactImageButton.scaleType = ImageView.ScaleType.CENTER_CROP
 
                 // If contact is in the form of Uri String, parse it and load the image
                 if (uri != null) {
@@ -176,7 +168,6 @@ class PostAdapter(private val context: Context, private var posts: MutableList<P
                 }
             }
         }
-
 
         /////////////////////add photo////////////////////////
         addPhotoButton.setOnClickListener {
@@ -193,6 +184,7 @@ class PostAdapter(private val context: Context, private var posts: MutableList<P
         val view = LayoutInflater.from(context).inflate(R.layout.dialog_edit_post, null)
         val addPhotoButton: ImageButton = view.findViewById(R.id.add_photo)
         val addContactButton: ImageButton = view.findViewById(R.id.add_contact)
+        val contextListView: LinearLayout = view.findViewById(R.id.contactList2)
         builder.setView(view)
 
         builder.setPositiveButton("수정", null)
@@ -208,7 +200,7 @@ class PostAdapter(private val context: Context, private var posts: MutableList<P
         }
 
         addContactButton.setOnClickListener {
-            onAddContactListener ?.invoke(posts[position])
+            onAddContactListener ?.invoke(contextListView, posts[position])
         }
 
         val dialog = builder.create()
@@ -216,8 +208,6 @@ class PostAdapter(private val context: Context, private var posts: MutableList<P
         dialog.setOnShowListener {
             val positiveButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE)
             positiveButton.setOnClickListener {
-
-
                 val title = view.findViewById<EditText>(R.id.edit_title).text.toString()
                 val date = view.findViewById<EditText>(R.id.edit_date).text.toString()
                 val location = view.findViewById<EditText>(R.id.edit_location).text.toString()
