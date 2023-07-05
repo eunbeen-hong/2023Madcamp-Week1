@@ -48,6 +48,7 @@ Tab1 - 연락처
 Tab2 - 갤러리 / 카메라
 Tab3 - 블로그
 
+![Splash](https://github.com/2023MadCamp-Week1/Week1_App/assets/39610886/b81206ed-5d00-4cdf-8358-6d9f8a57fc13)
 ![Tab1_contacts](https://github.com/2023MadCamp-Week1/Week1_App/assets/39610886/94954e97-f412-4994-a261-1cd7c7f7cf1d)
 ![Tab1_contactdetails](https://github.com/2023MadCamp-Week1/Week1_App/assets/39610886/aa4c05f5-8eb0-426b-a809-0f1d56108721)
 ![Tab2_gallery](https://github.com/2023MadCamp-Week1/Week1_App/assets/39610886/bb6ed828-975f-41c9-98dd-e42b5e3465cc)
