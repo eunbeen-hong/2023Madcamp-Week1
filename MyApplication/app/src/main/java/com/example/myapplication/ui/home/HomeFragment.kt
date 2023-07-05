@@ -30,14 +30,12 @@ data class Person(
     val imageUri: String?
 )
 
-
 // 검색 결과에 사용하는 data class
 data class PersonItem(
     val imageUri: String?,
     val name: String,
     val number: String
 )
-
 
 // 검색했을 때 나오는 Dialog 관리
 class PersonItemAdapter(context: Context, private val items: List<PersonItem>) :
@@ -218,9 +216,6 @@ class HomeFragment : Fragment() {
         override fun getItemCount() = people.size
     }
 
-
-
-
     // 연락처 추가 함수
     private fun showAddContactDialog(fileName: String, adapter: PersonAdapter) {
         val builder = AlertDialog.Builder(requireContext())
@@ -294,6 +289,7 @@ class HomeFragment : Fragment() {
         val dialogView = LayoutInflater.from(context).inflate(R.layout.person_details_dialog, null)
         val setToBasicButton = dialogView.findViewById<Button>(R.id.setToBasic)
         val profileImage = dialogView.findViewById<ImageView>(R.id.profileImage)
+        val gohomeButton = dialogView.findViewById<Button>(R.id.gohome)
         builder.setView(dialogView)
         currentImageView = profileImage
 
@@ -328,6 +324,10 @@ class HomeFragment : Fragment() {
         instagramTextView.text = "Instagram ID: ${person.instagram}"
         githubTextView.text = "Github ID: ${person.github}"
         builder.setPositiveButton("닫기", null)
+
+        gohomeButton.setOnClickListener {
+            dialog.dismiss()
+        }
 
         deleteButton.setOnClickListener {
             deleteContact(person)
@@ -455,7 +455,6 @@ class HomeFragment : Fragment() {
         currentDialog = dialog
         dialog.show()
     }
-
 
     // 연락처 검색
     private fun searchContacts(searchText: String, searchBy: String): List<Person> {

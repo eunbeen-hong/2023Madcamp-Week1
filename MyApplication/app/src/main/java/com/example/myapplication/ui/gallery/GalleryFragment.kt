@@ -2,11 +2,9 @@ package com.example.myapplication.ui.gallery
 
 import android.app.Activity.RESULT_OK
 import android.app.AlertDialog
-import android.content.ContentUris
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
-import android.icu.text.SimpleDateFormat
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -24,7 +22,6 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import com.bumptech.glide.Glide
@@ -33,11 +30,9 @@ import com.example.myapplication.databinding.FragmentGalleryBinding
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import java.io.File
+import java.io.FileNotFoundException
 import java.io.FileOutputStream
 import java.io.IOException
-import java.io.OutputStream
-import java.util.Date
-import java.util.Locale
 import kotlin.properties.Delegates
 
 
@@ -51,6 +46,8 @@ class GalleryFragment : Fragment() {
     private val binding get() = _binding!!
     private val gson = Gson()
     private var currentAlbumIndex = -1 // 현재 그리드뷰로 보여지는 앨범이 albums에서 몇 번째 index인지를 나타낸다. (-1은 "전체 사진"을 가리킨다)
+    private lateinit var uriArrForCameraApp: ArrayList<String>
+    private lateinit var adapterForCameraApp: GridAdapter
 
     override fun onCreateView(
             inflater: LayoutInflater,
@@ -69,6 +66,7 @@ class GalleryFragment : Fragment() {
         val uriArr = getAllPhotos()
         val gridViewAdapter = GridAdapter(requireContext(), uriArr) // 사진 목록을 adapter에 전달한 후,
         gridView.adapter =  gridViewAdapter                         // adapter를 gridView에 연결한다.
+        adapterForCameraApp = gridViewAdapter
 
         gridView.onItemClickListener = AdapterView.OnItemClickListener { _, _, position, _ -> // 사진 하나를 클릭하면 실행된다.
             showImagePopup(requireContext(), uriArr, position, gridViewAdapter)
@@ -76,6 +74,7 @@ class GalleryFragment : Fragment() {
 
         cameraButton.setOnClickListener { // 버튼을 누르면 카메라 앱을 실행한다.
             Toast.makeText(requireContext(), "카메라 실행", Toast.LENGTH_SHORT).show()
+            uriArrForCameraApp = uriArr
             executeCameraApp()
         }
 
@@ -124,10 +123,10 @@ class GalleryFragment : Fragment() {
             albumNames.add(album.albumName)
         }
 
-        // 1. 창 닫기
+        // 2-1. 창 닫기
         builderShow.setPositiveButton("닫기") {dialog, _ -> dialog.dismiss()}
 
-        // 2. 앨범으로 복사하기
+        // 2-2. 앨범으로 복사하기
         builderShow.setNegativeButton("앨범") {_, _ ->
             val builderAlbum = AlertDialog.Builder(context) // 앨범 이동을 위한 새로운 창을 띄운다.
             builderAlbum.setTitle("앨범으로 복사")
@@ -153,7 +152,7 @@ class GalleryFragment : Fragment() {
             builderAlbum.create().show()
         }
 
-        // 3. 삭제하기
+        // 2-3. 사진 삭제하기
         builderShow.setNeutralButton("삭제") {_, _ ->
             if (currentAlbumIndex == -1) { // "전체 사진"인 상태에서 사진을 삭제하는 경우 실제 저장소에서도 사진을 삭제한다.
                 val builderDeleteAtStorage = AlertDialog.Builder(context) // 삭제 확인을 위한 새로운 창을 띄운다.
@@ -194,7 +193,7 @@ class GalleryFragment : Fragment() {
         builderShow.create().show()
     }
 
-    // 3. SD 저장소에서 사진 삭제하기
+    // 3. SD 저장소에서 사진 삭제하기 (현재 높은 버전에서는 제대로 작동하지 않는다!)
     private fun deletePhoto(imagePath: String): Boolean { // 삭제 버튼을 누르면 해당 사진을 저장소에서 삭제한다.
         fun getImageId(imagePath: String): Long? { // 보조 함수
             val uri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI
@@ -213,114 +212,143 @@ class GalleryFragment : Fragment() {
         }
 
         val resolver = requireContext().contentResolver
-        return if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) { // 안드로이드 낮은 버전에서는 기존 방식대로 한다.
+        return if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) { // 안드로이드 낮은 버전에서는 기존 방식대로 한다.
             val selection = MediaStore.Images.Media.DATA + "=?"
             val selectionArgs = arrayOf(imagePath)
             val deletedRows = resolver.delete(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, selection, selectionArgs)
             deletedRows > 0
         } else { // 안드로이드 높은 버전에서는 새로운 방식대로 한다.
-            val imageId = getImageId(imagePath) // imagePath로부터 이미지의 ID를 가져옴
+            /*val imageId = getImageId(imagePath) // imagePath로부터 이미지의 ID를 가져옴
             if (imageId != null && imageId > -1) {
                 val uri = ContentUris.withAppendedId(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, imageId)
                 val deletedRows = resolver.delete(uri, null, null)
                 deletedRows > 0
             } else {
                 false
-            }
+            }*/
+            val collection = MediaStore.Images.Media.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)
+            val selection = MediaStore.Images.Media.DATA + "= ?"
+            val selectionArgs = arrayOf(imagePath)
+            val deletedRows = resolver.delete(collection, selection, selectionArgs)
+            deletedRows > 0
         }
     }
-
-
-    private lateinit var currentPhotoPath: String
     
     // 4. 카메라 앱 실행하기
     private fun executeCameraApp() { // 플로팅 카메라 버튼을 누르면 카메라 앱을 실행한다.
         val takePictureIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
         activityResult.launch(takePictureIntent)
+
+        //dispatchTakePictureIntent()
+        //galleryAddPic()
     }
+/*
+    lateinit var currentPhotoPath: String
 
     @Throws(IOException::class)
-    private fun createImageFile(): File? {
-        val timeStamp: String = SimpleDateFormat("yyyyMMdd_HHmmss_SSS", Locale.getDefault()).format(Date())
-        val storageDir: File? = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
-        return File.createTempFile("JPEG_${timeStamp}_", ".jpg", storageDir).apply {
+    private fun createImageFile(): File {
+        // Create an image file name
+        val timeStamp: String = SimpleDateFormat("yyyyMMdd_HHmmss").format(Date())
+        val storageDir: File? = requireContext().getExternalFilesDir(Environment.DIRECTORY_PICTURES)
+        return File.createTempFile(
+            "MAD_${timeStamp}_", /* prefix */
+            ".jpg", /* suffix */
+            storageDir /* directory */
+        ).apply {
             // Save a file: path for use with ACTION_VIEW intents
             currentPhotoPath = absolutePath
         }
     }
 
-    private fun saveImageToFile(imageBitmap: Bitmap) {
-        /*val fileOutputStream: FileOutputStream?
-        val file = createImageFile() // 이미지 파일을 생성하기 위한 메서드 호출
-        try {
-            fileOutputStream = FileOutputStream(file)
-            imageBitmap.compress(Bitmap.CompressFormat.JPEG, 100, fileOutputStream)
-            fileOutputStream.close()
-            Toast.makeText(requireContext(), "이미지가 저장되었습니다.", Toast.LENGTH_SHORT).show()
-        } catch (e: Exception) {
-            e.printStackTrace()
-            Toast.makeText(requireContext(), "이미지 저장 중 오류가 발생했습니다.", Toast.LENGTH_SHORT).show()
-        } */
-        var folderPath = MediaStore.Images.Media.DATA
-        var fileName = "comment.jpeg"
-
-        var folder = File(folderPath)
-        if (!folder.isDirectory) folder.mkdirs()
-
-        var out = FileOutputStream(folderPath + fileName)
-
-        imageBitmap.compress(Bitmap.CompressFormat.JPEG, 100, out)
-    }
-
-    private val activityResult: ActivityResultLauncher<Intent> = registerForActivityResult( // 카메리 앱 실행 후 사진 저장하기
-        ActivityResultContracts.StartActivityForResult()) {
-        if(it.resultCode == RESULT_OK && it.data != null) {
-            // val extras = it.data!!.extras // 값 담기
-
-            val imageBitmap = it.data?.extras?.get("data") as? Bitmap
-            if (imageBitmap != null) {
-                //saveImageToFile(imageBitmap)
-
-                val imageFileName = "MY_IMG_${System.currentTimeMillis()}.jpg"
-                val storageDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
-
-// 이미지 파일을 저장할 실제 파일 객체 생성
-                val imageFile = File(storageDir, imageFileName)
-
-// 이미지 파일의 Uri 생성
-                val imageUri = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                    // Android N 이상 버전부터는 FileProvider를 사용하여 Uri를 생성해야 함
-                    FileProvider.getUriForFile(requireContext(), "com.example.android.fileprovider", imageFile)
-                } else {
-                    Uri.fromFile(imageFile)
+    private fun dispatchTakePictureIntent() {
+        Intent(MediaStore.ACTION_IMAGE_CAPTURE).also { takePictureIntent ->
+            // Ensure that there's a camera activity to handle the intent
+            takePictureIntent.resolveActivity(requireContext().packageManager)?.also {
+                // Create the File where the photo should go
+                val photoFile: File? = try {
+                    createImageFile()
+                } catch (ex: IOException) {
+                    null
                 }
-
-// 이미지 파일 저장
-                val outputStream: OutputStream? = requireContext().contentResolver.openOutputStream(imageUri)
-                imageBitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream)
-                outputStream?.close()
-
-// 갤러리 앱에서 새로 저장된 이미지를 인식할 수 있도록 갤러리 스캔
-                val mediaScanIntent = Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE)
-                mediaScanIntent.data = imageUri
-                requireContext().sendBroadcast(mediaScanIntent)
-
-
+                // Continue only if the File was successfully created
+                photoFile?.also {
+                    val photoURI: Uri = FileProvider.getUriForFile(
+                        requireContext(),
+                        "com.example.android.fileprovider",
+                        it
+                    )
+                    takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI)
+                    startActivityForResult(takePictureIntent, 123)
+                }
             }
-            Toast.makeText(requireContext(), "저장 완료!", Toast.LENGTH_SHORT).show()
-        } else {
-            Toast.makeText(requireContext(), "저장 취소?", Toast.LENGTH_SHORT).show()
         }
     }
 
-    // 팝업 메뉴 띄우기
+    private fun galleryAddPic() {
+        Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE).also { mediaScanIntent ->
+            val f = File(currentPhotoPath)
+            mediaScanIntent.data = Uri.fromFile(f)
+            requireContext().sendBroadcast(mediaScanIntent)
+        }
+    } */
+
+    // 4-1. 카메라 앱 실행 결과 처리하기
+    private val activityResult: ActivityResultLauncher<Intent> =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+            if((it.resultCode == RESULT_OK) && (it.data != null)) { // 사진을 제대로 촬영하고 저장을 요청한 경우
+                // val extras = it.data!!.extras // 값 담기
+
+                val imageBitmap = it.data?.extras?.get("data") as? Bitmap
+                if (imageBitmap != null) {
+                    saveImageOnUnderAndroidQ(imageBitmap)
+                }
+                uriArrForCameraApp.clear()
+                uriArrForCameraApp.addAll(getAllPhotos())
+                adapterForCameraApp.notifyDataSetChanged()
+                Toast.makeText(requireContext(), "저장 완료", Toast.LENGTH_SHORT).show()
+            } else {
+                Toast.makeText(requireContext(), "저장 취소", Toast.LENGTH_SHORT).show()
+            }
+        }
+
+
+    // 5. 카메라 사진 촬영 결과 저장하기
+    private fun saveImageOnUnderAndroidQ(bitmap: Bitmap) {
+        val fileName = System.currentTimeMillis().toString() + ".png"
+        val externalStorage = Environment.getExternalStorageDirectory().absolutePath
+        val path = "$externalStorage/DCIM/Camera"
+        val dir = File(path)
+        if(dir.exists().not()) { // 해당 폴더가 없을 경우 폴더 생성
+            dir.mkdirs()
+        }
+
+        try {
+            val fileItem = File("$dir/$fileName")
+            fileItem.createNewFile() //0KB 파일 생성.
+
+            val fileOutputStream = FileOutputStream(fileItem) // 파일 아웃풋 스트림
+            bitmap.compress(Bitmap.CompressFormat.PNG, 100, fileOutputStream) // 파일 아웃풋 스트림 객체를 통해서 Bitmap 압축
+            fileOutputStream.close() // 파일 아웃풋 스트림 객체 close
+
+            // 브로드캐스트 수신자에게 파일 미디어 스캔 액션 요청. 그리고 데이터로 추가된 파일에 Uri를 넘겨준다.
+            requireContext().sendBroadcast(Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.fromFile(fileItem)))
+        } catch (e: FileNotFoundException) {
+            e.printStackTrace()
+        } catch (e: IOException) {
+            e.printStackTrace()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    // 6. 팝업 메뉴 띄우기
     private fun showPopupMenu(view: View, uriArr: ArrayList<String>, adapter: GridAdapter, albumTitle: TextView) { // 정렬 버튼을 누르면 팝업 메뉴가 나타난다. 선택한 item에 따라 사진이 정렬된다.
         val popupMenu = PopupMenu(requireContext(), view)
         popupMenu.menuInflater.inflate(R.menu.gallery_change_order_menu, popupMenu.menu)
 
         popupMenu.setOnMenuItemClickListener { menuItem ->
             when (menuItem.itemId) {
-                // 1. 메뉴에서 "정렬" 항목을 클릭할 경우
+                // 6-1. 메뉴에서 "정렬" 항목을 클릭할 경우
                 R.id.gallery_menu_order -> {
                     val builderOrder = AlertDialog.Builder(context) // 정렬을 위한 새로운 창을 띄운다.
                     builderOrder.setTitle("정렬하기")
@@ -338,7 +366,7 @@ class GalleryFragment : Fragment() {
                     true
                 }
 
-                // 2. 메뉴에서 "앨범 선택" 항목을 클릭할 경우
+                // 6-2. 메뉴에서 "앨범 선택" 항목을 클릭할 경우
                 R.id.gallery_menu_album_select -> {
                     // 앨범 선택을 위한 새로운 창을 띄운다.
                     val builderAlbum = AlertDialog.Builder(context)
@@ -356,8 +384,8 @@ class GalleryFragment : Fragment() {
                     builderAlbum.setSingleChoiceItems(albumNames.toTypedArray(), 0) {_, position ->
                         selectedAlbumPosition = position
                     }
-
-                    builderAlbum.setPositiveButton("확인") {_, _ -> // 확인 버튼을 누르면 해당 앨범을 보여준다
+                    // 6-2-1. 확인 버튼을 누르면 해당 앨범을 보여준다.
+                    builderAlbum.setPositiveButton("확인") {_, _ ->
                         val selectedAlbumImages = if (selectedAlbumPosition == 0) { // 0은 앨범 없이 전체 사진을 가리킨다.
                             getAllPhotos()
                         } else {
@@ -376,7 +404,7 @@ class GalleryFragment : Fragment() {
                     val createdAlbum = builderAlbum.create()
 
                     createdAlbum.setOnShowListener {dialog ->
-                        // 앨범 삭제 버튼
+                        // 6-2-2. 앨범 삭제 버튼
                         val neutralButton = createdAlbum.getButton(AlertDialog.BUTTON_NEUTRAL)
                         neutralButton.setOnClickListener {
                             if (selectedAlbumPosition == 0) { // "전체 사진"을 고르면, 아무 일도 일어나지 않는다.
@@ -410,7 +438,7 @@ class GalleryFragment : Fragment() {
                                 builderDeleteAlbum.create().show()
                             }
                         }
-                        // 앨범 이름 변경 버튼
+                        // 6-2-3. 앨범 이름 변경 버튼
                         val negativeButton = createdAlbum.getButton(AlertDialog.BUTTON_NEGATIVE)
                         negativeButton.setOnClickListener {
                             if (selectedAlbumPosition == 0) { // "전체 사진"을 고르면, 아무 일도 일어나지 않는다.
@@ -422,6 +450,7 @@ class GalleryFragment : Fragment() {
                                 builderModifyName.setTitle("앨범 이름 변경")
                                 val addAlbumView = layoutInflater.inflate(R.layout.gallery_add_album, null)
                                 builderModifyName.setView(addAlbumView)
+                                addAlbumView.findViewById<EditText>(R.id.gallery_make_new_album_TextView).setText(albumNames[selectedAlbumPosition]) // 입력란에 기존 앨범 이름을 미리 넣어놓기
 
                                 builderModifyName.setNegativeButton("취소") {dialog, _ -> dialog.dismiss()}
                                 builderModifyName.setPositiveButton("변경", null) // 입력한 이름을 검증한 후에, 앨범 이름을 변경한다
@@ -456,7 +485,7 @@ class GalleryFragment : Fragment() {
                     true
                 }
 
-                // 3. 메뉴에서 "앨범 생성" 항목을 클릭할 경우
+                // 6-3. 메뉴에서 "앨범 생성" 항목을 클릭할 경우
                 R.id.gallery_menu_album_make -> {
                     val albumFile = "albums.json"
                     copyAssetToFile(requireContext(), albumFile)
@@ -504,7 +533,7 @@ class GalleryFragment : Fragment() {
         popupMenu.show()
     }
 
-    // 팝업 메뉴 중 정렬 기능을 위한 함수 (선택한 앨범에 대해서도 정렬 가능)
+    // 6-1. 팝업 메뉴 중 정렬 기능을 위한 함수 (선택한 앨범에 대해서도 정렬 가능)
     private fun changeGridViewOrder(position: Int, uriArr: ArrayList<String>, adapter: GridAdapter) {
         // orderList = ["이름 (가나다순)", "이름 (가나다 역순)", "날짜 (오름차순)", "날짜 (내림차순)"]
         when(position) {
@@ -539,7 +568,7 @@ class GalleryFragment : Fragment() {
         }
     }
 
-    // json 파일 읽고 쓰기 관련 함수
+    // 7-1. json 파일 읽고 쓰기 관련 함수
     private fun copyAssetToFile(context: Context, fileName: String) {
         val file = File(context.filesDir, fileName)
         if (file.exists()) {
@@ -556,12 +585,14 @@ class GalleryFragment : Fragment() {
         outputStream.close()
     }
 
+    // 7-2. json 파일 읽고 쓰기 관련 함수
     private fun writeToFile(fileName: String, people: List<Album>) {
         val file = File(requireContext().filesDir, fileName)
         val json = gson.toJson(people)
         file.writeText(json)
     }
 
+    // 7-3. json 파일 읽고 쓰기 관련 함수
     private fun readFromFile(fileName: String): MutableList<Album> {
         val file = File(requireContext().filesDir, fileName)
         val json = file.readText()
@@ -575,6 +606,7 @@ class GalleryFragment : Fragment() {
 }
 /*
 * <한 일>
+* - 권한 설정 (33이상 또는 미만)
 * - 사진 정렬 기능
 * - 앨범 기능 (종료해도 유지, 삭제하면 날라감)
 * - 앨범 생성 기능
@@ -583,12 +615,19 @@ class GalleryFragment : Fragment() {
 * - 앨범 이름 변경 기능
 * - 앨범 삭제 기능
 * - 사진 삭제 기능 (전체 사진에서 삭제할 경우 저장소에서도 삭제되지만, 앨범에서 삭제할 경우 앨범에서만 삭제된다)
+*   -> (상위 버전에서는 현재 삭제 불가)
+*
+* - 앱 이름 및 아이콘 변경
+* - 앱 로딩 화면 생성
+* - 앨범 타이틀 폰트 적용
+* - 앱 기본 색상 변경 (보라색 -> 하늘색)
+*
 *
 * <해야 할 일>
-* - 카메라 촬영 후 저장소에 저장 구현
+* - 카메라 촬영 후 저장소에 저장 구현 (저장은 되지만, 화질이 구리다.)
 *
 * 
-* <새로운 기능>
+* <추가할 수 있는 기능>
 * - 위치 기능
 * - 주소록 태그 기능
 *

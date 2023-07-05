@@ -1,4 +1,4 @@
-package com.example.myapplication.ui.calendar
+package com.example.myapplication.ui.post
 
 import android.view.LayoutInflater
 import android.view.View

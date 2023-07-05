@@ -1,26 +1,25 @@
 [
   {
-    "title":  "my first trip to England",
-    "location":  "London",
-    "date":  "06/29/2023",
-    "imgList": [],
-    "contactList":  ["john", "mary", "bob", "chris", "sara", "jane", "jenny", "aiden", "doctor strange", "sara", "jane", "jenny", "aiden", "doctor strange"],
-    "note": "I want to go see the London Eye!!"
-  },
-  {
     "title":  "my second trip to England",
     "location":  "London",
     "date":  "06/30/2023",
     "imgList": [],
-    "contactList":  ["john", "mary", "bob", "chris", "sara", "jane", "jenny", "aiden", "doctor strange", "sara", "jane", "jenny", "aiden", "doctor strange"],
-    "note": "I want to try fish & chips!!"
-  },
-  {
-    "title":  "my third trip to England",
-    "location":  "London",
-    "date":  "07/01/2023",
-    "imgList": [],
-    "contactList":  ["john", "mary", "bob", "chris", "sara", "jane", "jenny", "aiden", "doctor strange", "sara", "jane", "jenny", "aiden", "doctor strange"],
-    "note": "I want to sleep..."
+    "note": "I want to try fish & chips!!",
+    "contactList": [
+      {
+        "name": "카리나",
+        "number": "010-5614-7733",
+        "email": "karina@naver.com",
+        "instagram": "katarinabluu",
+        "github": "karinagithub"
+      },
+      {
+        "name": "권지용",
+        "number": "010-7534-9701",
+        "email": "bigbanggd@naver.com",
+        "instagram": "xxibgdrgnpm",
+        "github" : "GD"
+      }
+    ]
   }
 ]

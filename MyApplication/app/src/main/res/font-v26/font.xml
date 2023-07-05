@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<font-family xmlns:android="http://schemas.android.com/apk/res/android">
+    
+    <font
+        android:fontStyle="normal"
+        android:fontWeight="400"
+        android:font="@font/nanum_gar_maes_geur" />
+
+    <font
+        android:fontStyle="normal"
+        android:fontWeight="400"
+        android:font="@font/nanum_ggeu_teu_meo_ri_ce" />
+
+    <font
+        android:fontStyle="normal"
+        android:fontWeight="400"
+        android:font="@font/nanum_ggeu_teu_meo_ri_ce" />
+    
+</font-family>
