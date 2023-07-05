@@ -96,8 +96,8 @@
         android:layout_width="match_parent"
         android:layout_height="13dp"
         app:ci_drawable="@drawable/black_radius"
-        app:ci_height="6dp"
-        app:ci_width="6dp"
+        app:ci_height="4dp"
+        app:ci_width="4dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.8"
         app:layout_constraintStart_toStartOf="parent"
@@ -137,16 +137,5 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/contactListView" />
-
-
-    <Button
-        android:id="@+id/add_photo"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="+"
-        android:layout_gravity="center"
-        app:layout_constraintStart_toStartOf="@+id/travelName"
-        app:layout_constraintTop_toBottomOf="@+id/contactListView"
-        app:layout_constraintEnd_toEndOf="@+id/location" />
 
 </LinearLayout>

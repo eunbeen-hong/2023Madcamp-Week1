@@ -77,25 +77,6 @@
 
     </LinearLayout>
 
-    <HorizontalScrollView
-        android:id="@+id/imageListView2"
-        android:layout_width="match_parent"
-        android:layout_height="53dp"
-        android:background="@drawable/border"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/imageListView3"
-        tools:layout_editor_absoluteX="16dp"
-        tools:layout_editor_absoluteY="221dp">
-
-        <LinearLayout
-            android:id="@+id/imageList2"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:fontFamily="@font/nanumsquareround_otfeb"
-            android:orientation="horizontal"
-            android:textSize="16sp" />
-    </HorizontalScrollView>
 
     <LinearLayout
         android:layout_width="match_parent"
