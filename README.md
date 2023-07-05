@@ -26,6 +26,7 @@
     - 
 ![Tab1_contacts](https://github.com/2023MadCamp-Week1/Week1_App/assets/39610886/94954e97-f412-4994-a261-1cd7c7f7cf1d)
 ![Tab1_contactdetails](https://github.com/2023MadCamp-Week1/Week1_App/assets/39610886/aa4c05f5-8eb0-426b-a809-0f1d56108721)
+![search contact](https://github.com/2023MadCamp-Week1/Week1_App/assets/128043904/68184729-2235-4de9-b1c8-e7d4de2ba60d)
   
 - 갤러리: 여행 사진을 촬영하고 저장해요!
   - 사용자 디바이스에 저장된 사진을 보여줍니다.
@@ -39,8 +40,10 @@
     - 정렬 기능을 사용하여 사진을 이름 또는 날짜의 오름차순/내림차순으로 정렬합니다.
   - 카메라로 사진을 촬영합니다.
     - 카메라 앱을 실행하여 사진을 촬영하고 디바이스에 저장합니다.
-    - 
+      
 ![Tab2_gallery](https://github.com/2023MadCamp-Week1/Week1_App/assets/39610886/bb6ed828-975f-41c9-98dd-e42b5e3465cc)
+![new album](https://github.com/2023MadCamp-Week1/Week1_App/assets/128043904/86ce72da-3989-47dd-94f1-542efb47bb49)
+![album](https://github.com/2023MadCamp-Week1/Week1_App/assets/128043904/1651ec2a-57bc-414b-a345-7a13fbded773)
 
 - 블로그: 여행 계획을 세우고 추억을 기록해요!
   - 여행 계획과 추억을 사진과 멤버와 함께 기록합니다.
@@ -51,4 +54,7 @@
 
 ![Tab3_main](https://github.com/2023MadCamp-Week1/Week1_App/assets/39610886/272a82f7-0d4a-478e-bfe5-e2a21cc9e2f1)
 ![Tab3_newpost](https://github.com/2023MadCamp-Week1/Week1_App/assets/39610886/db68181d-78ff-43cf-8eea-f472b7a4849a)
+![post](https://github.com/2023MadCamp-Week1/Week1_App/assets/128043904/3d74dbfb-cc3d-48c4-98ad-f62c0fba7f83)
+
+
 
