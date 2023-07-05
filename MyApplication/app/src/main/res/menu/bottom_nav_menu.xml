@@ -12,8 +12,8 @@
         android:title="@string/title_gallery" />
 
     <item
-        android:id="@+id/navigation_calendar"
+        android:id="@+id/navigation_post"
         android:icon="@drawable/pen"
-        android:title="@string/title_calendar" />
+        android:title="@string/title_post" />
 
 </menu>

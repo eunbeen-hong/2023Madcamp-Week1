@@ -188,15 +188,15 @@ class PostAdapter(private val context: Context, private var posts: MutableList<P
 
     private fun showEditDialog(posts: MutableList<Post>, position: Int) {
         val builder = AlertDialog.Builder(context)
-        builder.setTitle("Edit Post")
+        builder.setTitle("블로그 수정")
 
         val view = LayoutInflater.from(context).inflate(R.layout.dialog_edit_post, null)
         val addPhotoButton: ImageButton = view.findViewById(R.id.add_photo)
         val addContactButton: ImageButton = view.findViewById(R.id.add_contact)
         builder.setView(view)
 
-        builder.setPositiveButton("confirm", null)
-        builder.setNegativeButton("cancel", null)
+        builder.setPositiveButton("수정", null)
+        builder.setNegativeButton("취소", null)
 
         view.findViewById<EditText>(R.id.edit_title).setText(posts[position].title)
         view.findViewById<EditText>(R.id.edit_date).setText(posts[position].date)

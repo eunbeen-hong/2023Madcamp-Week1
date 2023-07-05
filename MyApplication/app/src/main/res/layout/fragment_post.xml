@@ -21,6 +21,6 @@
         android:contentDescription="@string/write"
         android:focusable="true"
         android:src="@drawable/ic_add"
-        app:backgroundTint="@android:color/darker_gray" />
+        app:backgroundTint="@color/green_light" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

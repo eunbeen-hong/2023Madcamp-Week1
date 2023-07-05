@@ -11,68 +11,71 @@
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
-    <TextView
-        android:id="@+id/travelName"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/travel_name"
-        android:clickable="true"
-        android:focusable="true"
-        android:background="@color/blue"
-        android:fontFamily="@font/nanumsquareround_otfeb"
-        android:textSize="20sp"
-        app:layout_constraintEnd_toStartOf="@+id/editButton"
-        app:layout_constraintHorizontal_bias="0.0"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toTopOf="@+id/date"/>
+        <TextView
+            android:id="@+id/travelName"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/travel_name"
+            android:clickable="true"
+            android:focusable="true"
+            android:background="@color/blue"
+            android:fontFamily="@font/nanumsquareround_otfeb"
+            android:textSize="20sp"
+            app:layout_constraintEnd_toStartOf="@+id/editButton"
+            app:layout_constraintHorizontal_bias="0.0"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toTopOf="@+id/date"/>
 
-    <TextView
-        android:id="@+id/location"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:background="@color/red"
-        android:clickable="true"
-        android:focusable="true"
-        android:fontFamily="@font/nanumsquareround_otfeb"
-        android:text="@string/location"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/editButton"/>
+        <TextView
+            android:id="@+id/location"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@color/red"
+            android:clickable="true"
+            android:focusable="true"
+            android:fontFamily="@font/nanumsquareround_otfeb"
+            android:text="@string/location"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/editButton"/>
 
-    <TextView
-        android:id="@+id/date"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:background="@color/green"
-        android:clickable="true"
-        android:contentDescription="Enter date"
-        android:ems="10"
-        android:focusable="true"
-        android:fontFamily="@font/nanumsquareround_otfeb"
-        android:textSize="17sp"
-        app:layout_constraintEnd_toStartOf="@+id/location"
-        app:layout_constraintHorizontal_bias="0.0"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/travelName"/>
+        <TextView
+            android:id="@+id/date"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@color/green"
+            android:clickable="true"
+            android:contentDescription="Enter date"
+            android:ems="10"
+            android:focusable="true"
+            android:fontFamily="@font/nanumsquareround_otfeb"
+            android:textSize="17sp"
+            app:layout_constraintEnd_toStartOf="@+id/location"
+            app:layout_constraintHorizontal_bias="0.0"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/travelName"/>
 
 
-    <ImageButton
-        android:id="@+id/deleteButton"
-        android:layout_width="30dp"
-        android:layout_height="30dp"
-        android:scaleType="centerInside"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:srcCompat="@drawable/delete_button" />
+        <ImageButton
+            android:id="@+id/deleteButton"
+            android:layout_width="23dp"
+            android:layout_height="23dp"
+            android:background="#00FFFFFF"
+            android:scaleType="centerCrop"
+            app:layout_constraintBottom_toTopOf="@+id/location"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:srcCompat="@drawable/bin" />
 
-    <ImageButton
-        android:id="@+id/editButton"
-        android:layout_width="30dp"
-        android:layout_height="30dp"
-        android:scaleType="centerInside"
-        app:layout_constraintEnd_toStartOf="@+id/deleteButton"
-        app:layout_constraintTop_toTopOf="parent"
-        app:srcCompat="@drawable/check_true" />
+        <ImageButton
+            android:id="@+id/editButton"
+            android:layout_width="25dp"
+            android:layout_height="25dp"
+            android:layout_marginRight="3dp"
+            android:background="#00FFFFFF"
+            android:scaleType="centerInside"
+            app:layout_constraintEnd_toStartOf="@+id/deleteButton"
+            app:layout_constraintTop_toTopOf="parent"
+            app:srcCompat="@drawable/edit" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
@@ -90,10 +93,10 @@
     <me.relex.circleindicator.CircleIndicator
         android:id="@+id/indicator"
         android:layout_width="match_parent"
-        android:layout_height="10dp"
-        app:ci_drawable="@drawable/check_false"
-        app:ci_height="7dp"
-        app:ci_width="7dp"
+        android:layout_height="13dp"
+        app:ci_drawable="@drawable/black_radius"
+        app:ci_height="6dp"
+        app:ci_width="6dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.8"
         app:layout_constraintStart_toStartOf="parent"
