@@ -48,7 +48,7 @@ class PostAdapter(private val context: Context, private var posts: MutableList<P
     private var onAddPhotoListener : ((Post) -> Unit)? = null
     private var onDeletePostListener : ((Post) -> Unit)? = null
     private var onContactDetailListener: ((Person) -> Unit)? = null
-    private var onAddContactListener: ((Post) -> Unit)? = null
+    private var onAddContactListener: ((LinearLayout, Post) -> Unit)? = null
 
     fun setOnDeletePostListener(listener: (Post) -> Unit) {
         onDeletePostListener = listener
@@ -66,7 +66,7 @@ class PostAdapter(private val context: Context, private var posts: MutableList<P
         onAddPhotoListener = listener
     }
 
-    fun setOnAddContactListener (listener: (Post) -> Unit) {
+    fun setOnAddContactListener (listener: (LinearLayout, Post) -> Unit) {
         onAddContactListener = listener
     }
 
@@ -184,6 +184,7 @@ class PostAdapter(private val context: Context, private var posts: MutableList<P
         val view = LayoutInflater.from(context).inflate(R.layout.dialog_edit_post, null)
         val addPhotoButton: ImageButton = view.findViewById(R.id.add_photo)
         val addContactButton: ImageButton = view.findViewById(R.id.add_contact)
+        val contextListView: LinearLayout = view.findViewById(R.id.contactList2)
         builder.setView(view)
 
         builder.setPositiveButton("confirm", null)
@@ -199,7 +200,7 @@ class PostAdapter(private val context: Context, private var posts: MutableList<P
         }
 
         addContactButton.setOnClickListener {
-            onAddContactListener ?.invoke(posts[position])
+            onAddContactListener ?.invoke(contextListView, posts[position])
         }
 
         val dialog = builder.create()

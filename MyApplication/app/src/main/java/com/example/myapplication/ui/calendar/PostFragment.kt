@@ -109,13 +109,11 @@ class PostFragment : Fragment() {
             }
         }
 
-        // FIXME
         /////////////////////add contact////////////////////////
-        postAdapter.setOnAddContactListener { post ->
-            val view = layoutInflater.inflate(R.layout.dialog_edit_post, null)
-            val contactListLayout = view.findViewById<LinearLayout>(R.id.contactList2)
-            var selectedPeople = mutableListOf<Person>()
-            showContactsDialog(people, selectedPeople, contactListLayout)
+        var selectedPeople = mutableListOf<Person>()
+        postAdapter.setOnAddContactListener { layout, post ->
+            currentPost = post
+            showContactsDialog(people, selectedPeople, layout)
         }
 
         /////////////////////contact details////////////////////////
@@ -203,20 +201,20 @@ class PostFragment : Fragment() {
         get() = (this * Resources.getSystem().displayMetrics.density + 0.5f).toInt()
 
     private fun showContactsDialog(people: MutableList<Person>, selectedPeople: MutableList<Person>, contactListLayout: LinearLayout) {
-        val builder = AlertDialog.Builder(requireContext())
+        val builder = AlertDialog.Builder(contactListLayout.context)
         val view = layoutInflater.inflate(R.layout.dialog_contacts, null)
         val listView = view.findViewById<RecyclerView>(R.id.contacts_list)
 
-        val layoutManager = LinearLayoutManager(requireContext())
+        val layoutManager = LinearLayoutManager(contactListLayout.context)
         listView.layoutManager = layoutManager
 
         val adapter = PersonAdapter(people) { person ->
             selectedPeople.add(person)
-            Toast.makeText(requireContext(), "${person.name} selected", Toast.LENGTH_SHORT).show()
+            Toast.makeText(contactListLayout.context, "${person.name} selected", Toast.LENGTH_SHORT).show()
 
             if (!person.imageUri.isNullOrEmpty()) {
                 // Create a new CardView
-                val cardView = CardView(requireContext()).apply {
+                val cardView = CardView(contactListLayout.context).apply {
                     layoutParams = ViewGroup.LayoutParams(50.dp, 50.dp) // replace 50.dp with your desired dp size
                     radius = 70f // half of the size to make a circle
                     useCompatPadding = true
@@ -225,7 +223,7 @@ class PostFragment : Fragment() {
                 }
 
                 // Create a new ImageView and add it to CardView
-                val imageView = ImageView(requireContext()).apply {
+                val imageView = ImageView(contactListLayout.context).apply {
                     layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
                     scaleType = ImageView.ScaleType.CENTER_CROP
                 }
@@ -242,6 +240,13 @@ class PostFragment : Fragment() {
                 // Add the CardView to contactListLayout
                 contactListLayout.addView(cardView)
             }
+
+            currentPost?.let { currentPost ->
+                currentPost.contactList.addAll(selectedPeople)
+                writeToFile("post.json", postList)
+                postAdapter.notifyDataSetChanged()
+            }
+
         }
 
 
