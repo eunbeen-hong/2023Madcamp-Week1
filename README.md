@@ -12,6 +12,7 @@
 
 트래블로그는 여행을 계획하고 추억을 기록할 수 있는 어플입니다.   
 여행 멤버들의 연락처와 사진을 저장하고 여행의 기억을 기록하면서 소중한 추억을 간직하세요!
+![Tab1_contactdetails](https://github.com/2023MadCamp-Week1/Week1_App/assets/39610886/5196d3ce-3241-4c3f-82cf-27a62214d653)
 
 ## 기능 (Function)
 
