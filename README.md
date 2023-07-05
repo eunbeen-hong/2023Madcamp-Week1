@@ -23,8 +23,8 @@
     - 사진, 전화번호, 이메일, 인스타그램 및 Github 아이디를 저장할 수 있습니다.
     - 사용자의 전화번호, 인스타그램, Github을 선택하면 해당 앱이 실행됩니다.
   - 연락처를 검색할 수 있습니다.
-    - 이름 또는 전화번호로 사용자를 검색할 수 있습니다.
-    - 
+    - 이름 또는 전화번호로 사용자를 검색하고, 세부정보를 확인할 수 있습니다.
+      
 ![Tab1_contacts](https://github.com/2023MadCamp-Week1/Week1_App/assets/39610886/94954e97-f412-4994-a261-1cd7c7f7cf1d)
 ![Tab1_contactdetails](https://github.com/2023MadCamp-Week1/Week1_App/assets/39610886/aa4c05f5-8eb0-426b-a809-0f1d56108721)
 ![search contact](https://github.com/2023MadCamp-Week1/Week1_App/assets/128043904/68184729-2235-4de9-b1c8-e7d4de2ba60d)
@@ -51,7 +51,7 @@
     - 게시물마다 제목, 날짜, 장소, 사진, 멤버를 저장합니다.
     - 등록된 게시물에서 사진과 멤버를 옆으로 슬라이드하면서 볼 수 있습니다.
     - 게시물을 추가, 삭제, 수정할 수 있습니다.
-    - 게시물에 태그된 멤버를 선택하면 연락처가 뜨면서 곧바로 연락할 수 있습니다.
+    - 게시물에 태그된 멤버를 선택하면 연락처가 뜨면서 세부정보를 확인할 수 있습니다.
 
 ![Tab3_main](https://github.com/2023MadCamp-Week1/Week1_App/assets/39610886/272a82f7-0d4a-478e-bfe5-e2a21cc9e2f1)
 ![Tab3_newpost](https://github.com/2023MadCamp-Week1/Week1_App/assets/39610886/db68181d-78ff-43cf-8eea-f472b7a4849a)
