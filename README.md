@@ -12,7 +12,6 @@
 
 트래블로그는 여행을 계획하고 추억을 기록할 수 있는 어플입니다.   
 여행 멤버들의 연락처와 사진을 저장하고 여행의 기억을 기록하면서 소중한 추억을 간직하세요!
-![Tab1_contactdetails](https://github.com/2023MadCamp-Week1/Week1_App/assets/39610886/5196d3ce-3241-4c3f-82cf-27a62214d653)
 
 ## 기능 (Function)
 
@@ -46,12 +45,11 @@
 ## 시연 스크린샷 (Demo Screenshots)
 
 Tab1 - 연락처
-![Tab1_contacts](https://github.com/2023MadCamp-Week1/Week1_App/assets/39610886/0330e8de-7002-40e4-9e96-1ed333bf2b1c?raw=true&s=500)
-![Tab1_contactdetails](https://github.com/2023MadCamp-Week1/Week1_App/assets/39610886/d2357a7f-b4fe-4cdc-a041-456520012919?raw=true&s=500)
-
 Tab2 - 갤러리 / 카메라
-![Tab2_gallery](https://github.com/2023MadCamp-Week1/Week1_App/assets/39610886/6932978a-3dc2-4ec2-8d26-41eea56ba38e?raw=true&s=500)
-
 Tab3 - 블로그
-![Tab3_main](https://github.com/2023MadCamp-Week1/Week1_App/assets/39610886/177ec492-9e4a-4c71-9ca8-4f2c5feadd02?raw=true&s=500)
-![Tab3_newpost](https://github.com/2023MadCamp-Week1/Week1_App/assets/39610886/79a11dd0-cf64-4e3b-8f2a-f227376b8c32?raw=true&s=500)
+
+![Tab1_contacts](https://github.com/2023MadCamp-Week1/Week1_App/assets/39610886/94954e97-f412-4994-a261-1cd7c7f7cf1d)
+![Tab1_contactdetails](https://github.com/2023MadCamp-Week1/Week1_App/assets/39610886/aa4c05f5-8eb0-426b-a809-0f1d56108721)
+![Tab2_gallery](https://github.com/2023MadCamp-Week1/Week1_App/assets/39610886/bb6ed828-975f-41c9-98dd-e42b5e3465cc)
+![Tab3_main](https://github.com/2023MadCamp-Week1/Week1_App/assets/39610886/272a82f7-0d4a-478e-bfe5-e2a21cc9e2f1)
+![Tab3_newpost](https://github.com/2023MadCamp-Week1/Week1_App/assets/39610886/db68181d-78ff-43cf-8eea-f472b7a4849a)
