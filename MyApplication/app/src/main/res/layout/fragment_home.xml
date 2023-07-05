@@ -46,5 +46,5 @@
         android:layout_marginBottom="16dp"
         android:clickable="true"
         android:src="@drawable/ic_menu"
-        app:backgroundTint="@android:color/darker_gray" />
+        app:backgroundTint="@color/green_light" />
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

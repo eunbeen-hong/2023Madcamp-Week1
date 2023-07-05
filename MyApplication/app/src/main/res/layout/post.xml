@@ -11,6 +11,7 @@
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
+
     <TextView
         android:id="@+id/travelName"
         android:layout_width="wrap_content"
@@ -89,10 +90,10 @@
     <me.relex.circleindicator.CircleIndicator
         android:id="@+id/indicator"
         android:layout_width="match_parent"
-        android:layout_height="10dp"
-        app:ci_drawable="@drawable/check_false"
-        app:ci_height="7dp"
-        app:ci_width="7dp"
+        android:layout_height="13dp"
+        app:ci_drawable="@drawable/black_radius"
+        app:ci_height="6dp"
+        app:ci_width="6dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.8"
         app:layout_constraintStart_toStartOf="parent"

@@ -271,13 +271,13 @@ class PostFragment : Fragment() {
 
     private fun showNewPostDialog(fileName: String, postAdapter: PostAdapter, people: MutableList<Person>) {
         val builder = AlertDialog.Builder(requireContext())
-        builder.setTitle("make new post!")
+        builder.setTitle("새로운 블로그 작성하기")
 
         val view = layoutInflater.inflate(R.layout.dialog_new_post, null)
         builder.setView(view)
 
-        builder.setPositiveButton("add", null)
-        builder.setNegativeButton("cancel", null)
+        builder.setPositiveButton("추가", null)
+        builder.setNegativeButton("취소", null)
 
         val dialog = builder.create()
 
