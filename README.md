@@ -1,4 +1,4 @@
-# Week1 Travelog 트레블로그
+# Week1 Travelog 트래블로그
 
 ## Developers
 
@@ -10,7 +10,7 @@
 
 ## Introduction
 
-트래블로거는 여행을 계획하고 추억을 기록할 수 있는 어플입니다. 연락처와 사진을 저장하고 여행의 기억을 저장하여 소중한 추억을 간직하세요!
+트래블로그는 여행을 계획하고 추억을 기록할 수 있는 어플입니다. 연락처와 사진을 저장하고 여행의 기억을 저장하여 소중한 추억을 간직하세요!
 
 ## 기능
 
@@ -23,15 +23,15 @@
 - Blog: 여행의 기억을 기록해요
   - 여행의 추억을 사진과 사람들과 함께 기록할 수 있습니다.
 
-## 시현장면 (Demo Scenes)
+## 시연 (Demo Scenes)
 
-1. 시현장면 1: Description of the demo scene, showcasing a specific feature or usage scenario.
+1. 시연 1: Description of the demo scene, showcasing a specific feature or usage scenario.
    ![Demo Scene 1](demo_scene_1.png)
 
-2. 시현장면 2: Description of the demo scene, showcasing another specific feature or usage scenario.
+2. 시연 2: Description of the demo scene, showcasing another specific feature or usage scenario.
    ![Demo Scene 2](demo_scene_2.png)
 
-3. 시현장면 3: Description of the demo scene, highlighting an important functionality or user interaction.
+3. 시연 3: Description of the demo scene, highlighting an important functionality or user interaction.
    ![Demo Scene 3](demo_scene_3.png)
 
 ## 시작하기
