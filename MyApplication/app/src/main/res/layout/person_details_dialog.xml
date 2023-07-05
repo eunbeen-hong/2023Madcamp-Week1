@@ -6,7 +6,6 @@
     android:orientation="vertical"
     android:padding="8dp" >
 
-
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -17,9 +16,17 @@
             android:id="@+id/profileImage"
             android:layout_width="196dp"
             android:layout_height="196dp"
-            android:src="@drawable/ic_name"
+            android:layout_centerInParent="true"
             android:scaleType="centerCrop"
-            android:layout_centerInParent="true" />
+            android:src="@drawable/ic_name" />
+
+        <Button
+            android:id="@+id/gohome"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_alignParentTop="true"
+            android:layout_alignParentEnd="true"
+            android:text="x" />
 
     </RelativeLayout>
 
@@ -46,6 +53,7 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center_vertical"
+        android:paddingLeft="15dp"
         android:paddingTop="8dp"
         android:paddingBottom="8dp">
 
@@ -68,6 +76,7 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center_vertical"
+        android:paddingLeft="15dp"
         android:paddingTop="8dp"
         android:paddingBottom="8dp">
 
@@ -92,6 +101,7 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center_vertical"
+        android:paddingLeft="15dp"
         android:paddingTop="8dp"
         android:paddingBottom="8dp">
 
@@ -114,6 +124,7 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center_vertical"
+        android:paddingLeft="15dp"
         android:paddingTop="8dp"
         android:paddingBottom="8dp">
 
@@ -138,6 +149,7 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center_vertical"
+        android:paddingLeft="15dp"
         android:paddingTop="8dp"
         android:paddingBottom="8dp">
 

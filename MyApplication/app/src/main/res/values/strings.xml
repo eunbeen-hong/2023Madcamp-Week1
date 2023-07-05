@@ -5,6 +5,10 @@
     <string name="title_calendar">블로그</string>
     <string name="init_date_select">Select a Date</string>
     <string name="add_task_hint">Write a new task</string>
+    <string name="write">write something here</string>
+    <string name="location">location here</string>
+    <string name="date">date here</string>
+    <string name="travel_name">My First Trip to NEW YORK</string>
     <string name="gallery_camera">Execute camera app</string>
     <string name="gallery_album_title">전체 사진</string>
     <string name="gallery_menu">Change the order</string>

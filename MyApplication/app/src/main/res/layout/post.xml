@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="15dp"
+    android:layout_marginHorizontal="5dp">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+    <TextView
+        android:id="@+id/travelName"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/travel_name"
+        android:clickable="true"
+        android:focusable="true"
+        android:background="@color/blue"
+        android:fontFamily="@font/nanumsquareround_otfeb"
+        android:textSize="20sp"
+        app:layout_constraintEnd_toStartOf="@+id/editButton"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toTopOf="@+id/date"/>
+
+    <TextView
+        android:id="@+id/location"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@color/red"
+        android:clickable="true"
+        android:focusable="true"
+        android:fontFamily="@font/nanumsquareround_otfeb"
+        android:text="@string/location"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/editButton"/>
+
+    <TextView
+        android:id="@+id/date"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@color/green"
+        android:clickable="true"
+        android:contentDescription="Enter date"
+        android:ems="10"
+        android:focusable="true"
+        android:fontFamily="@font/nanumsquareround_otfeb"
+        android:textSize="17sp"
+        app:layout_constraintEnd_toStartOf="@+id/location"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/travelName"/>
+
+
+    <ImageButton
+        android:id="@+id/deleteButton"
+        android:layout_width="30dp"
+        android:layout_height="30dp"
+        android:scaleType="centerInside"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:srcCompat="@drawable/delete_button" />
+
+    <ImageButton
+        android:id="@+id/editButton"
+        android:layout_width="30dp"
+        android:layout_height="30dp"
+        android:scaleType="centerInside"
+        app:layout_constraintEnd_toStartOf="@+id/deleteButton"
+        app:layout_constraintTop_toTopOf="parent"
+        app:srcCompat="@drawable/check_true" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+
+    <androidx.viewpager.widget.ViewPager
+        android:id="@+id/imageList"
+        android:layout_width="match_parent"
+        android:layout_height="300dp"
+        android:background="@color/grey"
+        app:layout_constraintBottom_toTopOf="@+id/indicator"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/date" />
+
+    <me.relex.circleindicator.CircleIndicator
+        android:id="@+id/indicator"
+        android:layout_width="match_parent"
+        android:layout_height="10dp"
+        app:ci_drawable="@drawable/check_false"
+        app:ci_height="7dp"
+        app:ci_width="7dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.8"
+        app:layout_constraintStart_toStartOf="parent"
+        tools:layout_editor_absoluteY="380dp" />
+
+    <HorizontalScrollView
+        android:id="@+id/contactListView"
+        android:layout_width="match_parent"
+        android:layout_height="53dp"
+        android:background="@color/purple_200"
+        tools:layout_editor_absoluteX="16dp"
+        tools:layout_editor_absoluteY="221dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/indicator"
+        app:layout_constraintBottom_toTopOf="@+id/note">
+
+        <LinearLayout
+            android:id="@+id/contactList"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="horizontal"
+            android:fontFamily="@font/nanumsquareround_otfeb"
+            android:textSize="16sp" />
+    </HorizontalScrollView>
+
+    <TextView
+        android:id="@+id/note"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/purple_500"
+        android:clickable="true"
+        android:focusable="true"
+        android:fontFamily="@font/nanumsquareround_otfeb"
+        android:text="@string/write"
+        android:textSize="20sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/contactListView" />
+
+
+    <Button
+        android:id="@+id/add_photo"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="+"
+        android:layout_gravity="center"
+        app:layout_constraintStart_toStartOf="@+id/travelName"
+        app:layout_constraintTop_toBottomOf="@+id/contactListView"
+        app:layout_constraintEnd_toEndOf="@+id/location" />
+
+</LinearLayout>

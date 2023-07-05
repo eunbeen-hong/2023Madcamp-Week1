@@ -1,0 +1,25 @@
+[
+  {
+    "title":  "my second trip to England",
+    "location":  "London",
+    "date":  "06/30/2023",
+    "imgList": [],
+    "note": "I want to try fish & chips!!",
+    "contactList": [
+      {
+        "name": "카리나",
+        "number": "010-5614-7733",
+        "email": "karina@naver.com",
+        "instagram": "katarinabluu",
+        "github": "karinagithub"
+      },
+      {
+        "name": "권지용",
+        "number": "010-7534-9701",
+        "email": "bigbanggd@naver.com",
+        "instagram": "xxibgdrgnpm",
+        "github" : "GD"
+      }
+    ]
+  }
+]
