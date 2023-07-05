@@ -195,6 +195,8 @@ class PostFragment : Fragment() {
                 currentPost.imgList.addAll(selectedUris)
                 writeToFile("posts.json", getPostSorted(postList))
                 postAdapter.notifyDataSetChanged()
+
+                addSelectedImagesToLayout(selectedUris, imageList2)
             }
         }
     }
@@ -269,6 +271,7 @@ class PostFragment : Fragment() {
         builder.setTitle("make new post!")
 
         val view = layoutInflater.inflate(R.layout.dialog_new_post, null)
+
         builder.setView(view)
 
         builder.setPositiveButton("add", null)
@@ -278,6 +281,7 @@ class PostFragment : Fragment() {
 
         val selectedPeople = mutableListOf<Person>()
         val contactListLayout = view.findViewById<LinearLayout>(R.id.contactList2)
+        val imageList2 = view.findViewById<LinearLayout>(R.id.imageList2)
         val addImageButton: ImageButton = view.findViewById(R.id.photo_addbutton)
         val addContactButton = view.findViewById<ImageButton>(R.id.contact_addbutton)
 
@@ -309,6 +313,8 @@ class PostFragment : Fragment() {
         dialog.setOnShowListener {
             val positiveButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE)
             positiveButton.setOnClickListener {
+
+                imageList2.removeAllViews()
                 newPost.title = view.findViewById<EditText>(R.id.new_title).text.toString().let {
                     it.ifBlank { "제목을 입력하세요" }
                 }
@@ -323,7 +329,6 @@ class PostFragment : Fragment() {
                 }
 
                 newPost.contactList = selectedPeople
-
                 currentPost = newPost
                 postList = readFromFile(fileName, object : TypeToken<MutableList<Post>>() {})
                 postList.add(newPost)
@@ -337,6 +342,27 @@ class PostFragment : Fragment() {
         dialog.window?.setBackgroundDrawableResource(R.drawable.dialog_border)
         dialog.show()
     }
+
+    private fun addSelectedImagesToLayout(selectedUris: List<String>, imageList2: LinearLayout) {
+        val layoutInflater = LayoutInflater.from(requireContext())
+
+        for (uriString in selectedUris) {
+            val uri = Uri.parse(uriString)
+            val imageView = layoutInflater.inflate(R.layout.dialog_new_post, imageList2, false) as ImageView
+
+            // Load the image into ImageView using Glide
+            Glide.with(this@PostFragment)
+                .load(uri)
+                .override(50.dp, 50.dp) // replace with your desired dp size
+                .centerCrop()
+                .into(imageView)
+
+            // Add the ImageView to imageList2
+            imageList2.addView(imageView)
+        }
+    }
+
+
 
     private fun showContactDetailsDialog(person: Person) {
         val builder = AlertDialog.Builder(requireContext())
