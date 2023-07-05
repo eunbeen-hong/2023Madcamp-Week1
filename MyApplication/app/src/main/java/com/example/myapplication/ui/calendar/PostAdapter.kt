@@ -1,4 +1,4 @@
-package com.example.myapplication.ui.calendar
+package com.example.myapplication.ui.post
 
 import android.content.Context
 import android.graphics.Bitmap
@@ -21,6 +21,10 @@ import android.widget.Toast
 import com.example.myapplication.R
 import android.graphics.BitmapFactory
 import android.os.AsyncTask
+import androidx.viewpager.widget.ViewPager
+import androidx.viewpager2.widget.ViewPager2
+import com.example.myapplication.ui.home.Person
+import me.relex.circleindicator.CircleIndicator
 import java.io.InputStream
 
 class LoadImageTask(private val imageView: ImageView) : AsyncTask<Uri, Void, Bitmap?>() {
@@ -44,11 +48,11 @@ class LoadImageTask(private val imageView: ImageView) : AsyncTask<Uri, Void, Bit
 
 class PostAdapter(private val context: Context, private var posts: MutableList<Post>) : BaseAdapter() {
     private var onItemRemoved: ((Post) -> Unit)? = null
-    private var onTextEditListener : ((Post, TextView) -> Unit)? = null
     private var onEditListener : ((MutableList<Post>) -> Unit)? = null
     private var onAddPhotoListener : ((Post) -> Unit)? = null
     private var onDeletePostListener : ((Post) -> Unit)? = null
-    private val REQUEST_CODE_GALLERY = 1001
+    private var onContactDetailListener: ((Person) -> Unit)? = null
+    private var onAddContactListener: ((Post) -> Unit)? = null
 
     fun setOnDeletePostListener(listener: (Post) -> Unit) {
         onDeletePostListener = listener
@@ -58,12 +62,16 @@ class PostAdapter(private val context: Context, private var posts: MutableList<P
         onEditListener = listener
     }
 
-    fun setOnTextEditListener (listener: (Post, TextView) -> Unit) {
-        onTextEditListener = listener
+    fun setOnContactDetailListener (listener: (Person) -> Unit) {
+        onContactDetailListener = listener
     }
 
     fun setOnAddPhotoListener (listener: (Post) -> Unit) {
         onAddPhotoListener = listener
+    }
+
+    fun setOnAddContactListener (listener: (Post) -> Unit) {
+        onAddContactListener = listener
     }
 
     fun updateData(newPosts: MutableList<Post>) {
@@ -72,7 +80,7 @@ class PostAdapter(private val context: Context, private var posts: MutableList<P
         notifyDataSetChanged()
     }
 
-    fun updateImageList(currentPost: Post?, imageList: MutableList<Uri>) {
+    fun updateImageList(currentPost: Post?, imageList: MutableList<String>) {
         if (currentPost != null) {
             currentPost.imgList.clear()
             currentPost.imgList.addAll(imageList)
@@ -108,8 +116,9 @@ class PostAdapter(private val context: Context, private var posts: MutableList<P
 
         val travelName: TextView = view.findViewById(R.id.travelName)
         val location: TextView = view.findViewById(R.id.location)
-        val date: EditText = view.findViewById(R.id.date)
-        val imageList: LinearLayout = view.findViewById(R.id.imageList)
+        val date: TextView = view.findViewById(R.id.date)
+        val imageViewPager: ViewPager = view.findViewById(R.id.imageList)
+        val indicator: CircleIndicator = view.findViewById(R.id.indicator)
         val contactList: LinearLayout = view.findViewById(R.id.contactList)
         val note: TextView = view.findViewById(R.id.note)
         val addPhotoButton: Button = view.findViewById(R.id.add_photo)
@@ -122,7 +131,8 @@ class PostAdapter(private val context: Context, private var posts: MutableList<P
         note.text = post.note; note.tag = "note"
 
         val imageCount = post.imgList.size
-        imageList.removeAllViews()
+
+//        imageList.removeAllViews()
 
         /////////////////////delete post////////////////////////
         deleteButton.setOnClickListener {
@@ -134,47 +144,43 @@ class PostAdapter(private val context: Context, private var posts: MutableList<P
             showEditDialog(posts, position)
         }
 
-        // FIXME
         /////////////////////images////////////////////////
-
-        for (uri in post.imgList) {
-            val imageView = ImageView(context)
-            imageView.layoutParams = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT, 300
-            )
-            imageView.adjustViewBounds = true
-            imageView.scaleType = ImageView.ScaleType.FIT_XY // or ImageView.ScaleType.CENTER_CROP
-            imageList.addView(imageView)
-
-            LoadImageTask(imageView).execute(uri)
-        }
+        imageViewPager.adapter = ImageAdapter(context, post.imgList)
+        indicator.setViewPager(imageViewPager)
 
         /////////////////////contacts////////////////////////
-        for (contact in post.contactList) {
-            val contactView = LayoutInflater.from(context).inflate(R.layout.contact_item, contactList, false) as LinearLayout
-            val contactImageButton = contactView.findViewById<ImageButton>(R.id.contactImage)
+        if (post.contactList != null) {
+            contactList.removeAllViews()
+            for (person in post.contactList) {
+                val uri = person.imageUri
+                val contactView = LayoutInflater.from(context)
+                    .inflate(R.layout.contact_item, contactList, false) as LinearLayout
+                val contactImageButton: ImageButton = contactView.findViewById<ImageButton>(R.id.contactImage)
 
-            val layoutParams = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.WRAP_CONTENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-            )
-            contactView.layoutParams = layoutParams
+                val layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.MATCH_PARENT
+                )
+                contactView.layoutParams = layoutParams
+                contactImageButton.scaleType = ImageView.ScaleType.CENTER
 
-            // If contact is in the form of Uri String, parse it and load the image
-            LoadImageTask(contactImageButton).execute(Uri.parse(contact))
+                // If contact is in the form of Uri String, parse it and load the image
+                if (uri != null) {
+                    LoadImageTask(contactImageButton).execute(Uri.parse(uri))
+                }
 
-            contactList.addView(contactView)
+                contactList.addView(contactView)
 
-            // TODO: when clicked, go to contact detail
-            contactImageButton.setOnClickListener {
-                // ?
+                contactImageButton.setOnClickListener {
+                    onContactDetailListener ?.invoke(person)
+                }
             }
         }
 
-        // FIXME
+
         /////////////////////add photo////////////////////////
         addPhotoButton.setOnClickListener {
-            addPhoto(post)
+            onAddPhotoListener ?.invoke(post)
         }
 
         return view
@@ -185,6 +191,8 @@ class PostAdapter(private val context: Context, private var posts: MutableList<P
         builder.setTitle("Edit Post")
 
         val view = LayoutInflater.from(context).inflate(R.layout.dialog_edit_post, null)
+        val addPhotoButton: ImageButton = view.findViewById(R.id.add_photo)
+        val addContactButton: ImageButton = view.findViewById(R.id.add_contact)
         builder.setView(view)
 
         builder.setPositiveButton("confirm", null)
@@ -195,17 +203,29 @@ class PostAdapter(private val context: Context, private var posts: MutableList<P
         view.findViewById<EditText>(R.id.edit_location).setText(posts[position].location)
         view.findViewById<EditText>(R.id.edit_note).setText(posts[position].note)
 
+        addPhotoButton.setOnClickListener {
+            onAddPhotoListener ?.invoke(posts[position])
+        }
+
+        addContactButton.setOnClickListener {
+            onAddContactListener ?.invoke(posts[position])
+        }
+
         val dialog = builder.create()
 
         dialog.setOnShowListener {
             val positiveButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE)
             positiveButton.setOnClickListener {
+
+
                 val title = view.findViewById<EditText>(R.id.edit_title).text.toString()
                 val date = view.findViewById<EditText>(R.id.edit_date).text.toString()
                 val location = view.findViewById<EditText>(R.id.edit_location).text.toString()
                 val note = view.findViewById<EditText>(R.id.edit_note).text.toString()
+                val imageUri = posts[position].imgList
+                val contacts = posts[position].contactList
 
-                val editedPost = Post(title, location, date, mutableListOf(), mutableListOf(), note)
+                val editedPost = Post(title, location, date, imageUri, note, contacts)
 
                 posts[position] = editedPost
 
@@ -230,10 +250,5 @@ class PostAdapter(private val context: Context, private var posts: MutableList<P
             dialog.dismiss()
         }
         builderShow.create().show()
-    }
-
-    // FIXME
-    private fun addPhoto(post: Post) {
-        onAddPhotoListener ?.invoke(post)
     }
 }
