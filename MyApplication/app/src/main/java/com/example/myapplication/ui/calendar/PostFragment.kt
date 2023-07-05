@@ -5,6 +5,7 @@ import android.content.ActivityNotFoundException
 import android.app.AlertDialog
 import android.content.Context
 import android.content.Intent
+import android.content.res.Resources
 import android.net.Uri
 import android.os.Bundle
 import android.util.Log
@@ -12,6 +13,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.*
+import androidx.cardview.widget.CardView
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -28,11 +30,11 @@ import com.example.myapplication.ui.home.Person
 import com.example.myapplication.ui.home.HomeFragment.PersonAdapter
 
 class Post(
-    val title: String,
-    val location: String,
-    val date: String,
+    var title: String,
+    var location: String,
+    var date: String,
     var imgList: MutableList<String>,
-    val note: String,
+    var note: String,
     var contactList: MutableList<Person>
 )
 //    var contactList: MutableList<String>,
@@ -107,13 +109,11 @@ class PostFragment : Fragment() {
             }
         }
 
-        // FIXME
         /////////////////////add contact////////////////////////
-        postAdapter.setOnAddContactListener { post ->
-            val view = layoutInflater.inflate(R.layout.dialog_edit_post, null)
-            val contactListLayout = view.findViewById<LinearLayout>(R.id.contactList2)
-            var selectedPeople = mutableListOf<Person>()
-            showContactsDialog(people, selectedPeople, contactListLayout)
+        var selectedPeople = mutableListOf<Person>()
+        postAdapter.setOnAddContactListener { layout, post ->
+            currentPost = post
+            showContactsDialog(people, selectedPeople, layout)
         }
 
         /////////////////////contact details////////////////////////
@@ -189,10 +189,6 @@ class PostFragment : Fragment() {
                 selectedUris.add(uri.toString())
             }
 
-//            currentPost?.let { postToUpdate ->
-//                postToUpdate.imgList.addAll(selectedUris)
-//                postAdapter.notifyDataSetChanged()
-//            }
             currentPost?.let { currentPost ->
                 currentPost.imgList.addAll(selectedUris)
                 writeToFile("posts.json", getPostSorted(postList))
@@ -201,38 +197,59 @@ class PostFragment : Fragment() {
         }
     }
 
+    val Int.dp: Int
+        get() = (this * Resources.getSystem().displayMetrics.density + 0.5f).toInt()
+
     private fun showContactsDialog(people: MutableList<Person>, selectedPeople: MutableList<Person>, contactListLayout: LinearLayout) {
-        val builder = AlertDialog.Builder(requireContext())
+        val builder = AlertDialog.Builder(contactListLayout.context)
         val view = layoutInflater.inflate(R.layout.dialog_contacts, null)
         val listView = view.findViewById<RecyclerView>(R.id.contacts_list)
 
-        val layoutManager = LinearLayoutManager(requireContext())
+        val layoutManager = LinearLayoutManager(contactListLayout.context)
         listView.layoutManager = layoutManager
 
         val adapter = PersonAdapter(people) { person ->
             selectedPeople.add(person)
-            Toast.makeText(requireContext(), "${person.name} selected", Toast.LENGTH_SHORT).show()
+            Toast.makeText(contactListLayout.context, "${person.name} selected", Toast.LENGTH_SHORT).show()
 
-            // TODO: when selected, change color or sth
-
-            // Load the image using Glide
             if (!person.imageUri.isNullOrEmpty()) {
-                // Create a new ImageView and load the selected contact's profile image into it.
-//                val contactItem = layoutInflater.inflate(R.layout.contact_item, null)
-//                val imageView = contactItem.findViewById<ImageButton>(R.id.contactImage)
-                val imageView = ImageView(requireContext())
-                imageView.layoutParams = ViewGroup.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.MATCH_PARENT
-                ) // Replace with the size you want.
+                // Create a new CardView
+                val cardView = CardView(contactListLayout.context).apply {
+                    layoutParams = ViewGroup.LayoutParams(50.dp, 50.dp) // replace 50.dp with your desired dp size
+                    radius = 70f // half of the size to make a circle
+                    useCompatPadding = true
+                    preventCornerOverlap = false
+                    cardElevation = 12f
+                }
 
+                // Create a new ImageView and add it to CardView
+                val imageView = ImageView(contactListLayout.context).apply {
+                    layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
+                    scaleType = ImageView.ScaleType.CENTER_CROP
+                }
+
+                cardView.addView(imageView)
+
+                // Load the image into ImageView using Glide
                 Glide.with(this@PostFragment)
                     .load(Uri.parse(person.imageUri))
+                    .override(50.dp, 50.dp) // replace 50.dp with your desired dp size
+                    .centerCrop() // apply circle crop
                     .into(imageView)
 
-                contactListLayout.addView(imageView)
+                // Add the CardView to contactListLayout
+                contactListLayout.addView(cardView)
             }
+
+            currentPost?.let { currentPost ->
+                currentPost.contactList.addAll(selectedPeople)
+                writeToFile("post.json", postList)
+                postAdapter.notifyDataSetChanged()
+            }
+
         }
+
+
 
         listView.adapter = adapter
 
@@ -245,7 +262,7 @@ class PostFragment : Fragment() {
     // TODO: 홍은빈
     // date 형식 강제로 통일하게?
     // new post: add 버튼 색깔
-    // new post 에서 이미지 추가 안됨
+    // 넣은 사진/사람 삭제
     // edit post에서 연락처 추가 안됨
     // 한 post의 person 중복 등록 안되게?
     // edit/new post dialog에서 image/contact 추가 시 아래에 뜨도록
@@ -265,13 +282,30 @@ class PostFragment : Fragment() {
         val dialog = builder.create()
 
         val selectedPeople = mutableListOf<Person>()
-
         val contactListLayout = view.findViewById<LinearLayout>(R.id.contactList2)
         val addImageButton: ImageButton = view.findViewById(R.id.photo_addbutton)
         val addContactButton = view.findViewById<ImageButton>(R.id.contact_addbutton)
 
+        var newPost = Post(
+            "",
+            "",
+            "",
+            mutableListOf(),
+            "",
+            mutableListOf()
+        )
+
+        currentPost = newPost
+
         addImageButton.setOnClickListener {
-            // TODO
+            val galleryIntent = Intent(Intent.ACTION_GET_CONTENT)
+            galleryIntent.type = "image/*"
+            galleryIntent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true)
+            try {
+                startActivityForResult(galleryIntent, REQUEST_CODE_GALLERY)
+            } catch (e: ActivityNotFoundException) {
+                // Handle the case when no gallery app is available
+            }
         }
         addContactButton.setOnClickListener {
             showContactsDialog(people, selectedPeople, contactListLayout)
@@ -280,33 +314,22 @@ class PostFragment : Fragment() {
         dialog.setOnShowListener {
             val positiveButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE)
             positiveButton.setOnClickListener {
-                val title = view.findViewById<EditText>(R.id.new_title).text.toString().let {
-                    it.ifBlank { "none" }
+                newPost.title = view.findViewById<EditText>(R.id.new_title).text.toString().let {
+                    it.ifBlank { "제목을 입력하세요" }
                 }
-                val date = view.findViewById<EditText>(R.id.new_date).text.toString().let {
-                    it.ifBlank { "none" }
+                newPost.date = view.findViewById<EditText>(R.id.new_date).text.toString().let {
+                    it.ifBlank { "날짜를 입력하세요" }
                 }
-                val location = view.findViewById<EditText>(R.id.new_location).text.toString().let {
-                    it.ifBlank { "none" }
+                newPost.location = view.findViewById<EditText>(R.id.new_location).text.toString().let {
+                    it.ifBlank { "장소를 입력하세요" }
                 }
-                val note = view.findViewById<EditText>(R.id.new_note).text.toString().let {
-                    it.ifBlank { "none" }
+                newPost.note = view.findViewById<EditText>(R.id.new_note).text.toString().let {
+                    it.ifBlank { "추억을 기록하세요" }
                 }
 
-//                val contacts = selectedPeople.map { it.number }
-//                val contactImages = selectedPeople.mapNotNull { it.imageUri } // get the image URIs
+                newPost.contactList = selectedPeople
 
-                val newPost = Post(
-                    title,
-                    location,
-                    date,
-                    mutableListOf(),
-                    note,
-                    selectedPeople
-                )
-//                    contacts.toMutableList(),
-//                    contactImages.toMutableList()
-
+                currentPost = newPost
                 postList = readFromFile(fileName, object : TypeToken<MutableList<Post>>() {})
                 postList.add(newPost)
                 writeToFile(fileName, postList)

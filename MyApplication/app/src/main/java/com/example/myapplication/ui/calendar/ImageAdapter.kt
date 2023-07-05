@@ -1,15 +1,11 @@
 package com.example.myapplication.ui.post
 
 import android.content.Context
-import android.net.Uri
-import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
-import androidx.recyclerview.widget.RecyclerView
 import androidx.viewpager.widget.PagerAdapter
 import com.bumptech.glide.Glide
-import com.example.myapplication.R
 
 class ImageAdapter(private val context: Context, private val imageList: MutableList<String>) : PagerAdapter() {
 
