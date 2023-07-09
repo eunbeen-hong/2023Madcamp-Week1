@@ -2,11 +2,16 @@
 
 ## 개발자 (Developers)
 
-- [정지우](https://github.com/jiwoojeong17)
-  
-- [홍은빈](https://github.com/pancakesontuesday)
-  
-- [김서현](https://github.com/frica12)
+- [정지우](https://github.com/jiwoojeong17), [홍은빈](https://github.com/pancakesontuesday), [김서현](https://github.com/frica12)
+
+
+## 기술 (Tech Stack)
+
+안드로이드 스튜디오와 코틀린을 이용하여 개발된 어플입니다.
+
+
+---
+
 
 ## 소개 (Introduction)
 
@@ -56,6 +61,5 @@
 ![Tab3_main](https://github.com/2023MadCamp-Week1/Week1_App/assets/39610886/272a82f7-0d4a-478e-bfe5-e2a21cc9e2f1)
 ![Tab3_newpost](https://github.com/2023MadCamp-Week1/Week1_App/assets/39610886/db68181d-78ff-43cf-8eea-f472b7a4849a)
 ![post](https://github.com/2023MadCamp-Week1/Week1_App/assets/128043904/3d74dbfb-cc3d-48c4-98ad-f62c0fba7f83)
-
 
 
