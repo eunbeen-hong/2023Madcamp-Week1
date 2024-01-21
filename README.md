@@ -2,7 +2,7 @@
 
 ## 개발자 (Developers)
 
-- [정지우](https://github.com/jiwoojeong17), [홍은빈](https://github.com/pancakesontuesday), [김서현](https://github.com/frica12)
+- [정지우](https://github.com/jiwoojeong17), [홍은빈](https://github.com/eunbeen-hong), [김서현](https://github.com/frica12)
 
 
 ## 기술 (Tech Stack)
